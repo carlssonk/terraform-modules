@@ -80,8 +80,8 @@ jobs:
           terraform workspace select -or-create ${{ inputs.environment }}
           
           if [ "${{ inputs.action }}" = "plan" ]; then
-            terraform plan -var-file='${{ inputs.environemnt }}.tfvars'
+            terraform plan -var-file='${{ inputs.environment }}.tfvars'
           else
-            terraform apply -auto-approve -var-file='${{ inputs.environemnt }}.tfvars'
+            terraform apply -auto-approve -var-file='${{ inputs.environment }}.tfvars'
           fi
         working-directory: ${{ inputs.tf_root_directory }}
