@@ -12,43 +12,28 @@ data "cloudflare_zones" "this" {
 locals {
   zone_id = data.cloudflare_zones.this.result[0].id
 
-  # Default settings with sensible security and performance values
+  # Conservative default settings that work on all Cloudflare plans
+  # Excludes settings that may be read-only or plan-specific (http2, http3, brotli, etc.)
   default_settings = {
-    # SSL/TLS
+    # SSL/TLS - Generally editable on all plans
     ssl                      = "full"
     always_use_https         = "on"
     min_tls_version          = "1.2"
     automatic_https_rewrites = "on"
-    tls_1_3                  = "on"
 
-    # Security
+    # Security - Generally editable on all plans
     security_level = "medium"
     browser_check  = "on"
-    challenge_ttl  = 1800
-    privacy_pass   = "on"
 
-    # Performance
-    brotli      = "on"
-    early_hints = "off"
-    http2       = "on"
-    http3       = "on"
-    "0rtt"      = "on"
+    # Network - Generally editable on all plans
+    ipv6 = "on"
 
-    # Caching
-    browser_cache_ttl = 14400
-
-    # Network
-    ipv6                     = "on"
-    websockets               = "on"
-    opportunistic_encryption = "on"
-    opportunistic_onion      = "on"
-
-    # Other
+    # Other - Generally editable on all plans
     development_mode = "off"
-    rocket_loader    = "off"
   }
 
   # Merge user settings with defaults
+  # Users can override defaults or add additional settings via var.settings
   final_settings = merge(local.default_settings, var.settings)
 }
 
