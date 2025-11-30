@@ -1,10 +1,7 @@
 ## Bootstrap user IAM policy
 
-Replace `ENVIRONMENT` with your environment/workspace (same as branch name and repo environment)
-
-Replace `AWS_REGION` with the AWS region (same as AWS_REGION that you added in repository variables)
-
-Replace `ORGANIZATION` with the repository/organization name (same as ORGANIZATION that you added in repository variables)
+Replace `AWS_ACCOUNT_ID` with your AWS Account ID (12-digit number)
+Replace `AWS_REGION` with the AWS region
 
 ```json
 {
@@ -17,11 +14,15 @@ Replace `ORGANIZATION` with the repository/organization name (same as ORGANIZATI
                 "s3:CreateBucket",
                 "s3:ListBucket",
                 "s3:Get*",
-                "s3:PutObject"
+                "s3:PutObject",
+                "s3:PutBucketTagging",
+                "s3:PutBucketVersioning",
+                "s3:PutEncryptionConfiguration",
+                "s3:PutBucketPublicAccessBlock"
             ],
             "Resource": [
-                "arn:aws:s3:::ORGANIZATION-terraform-state-bucket-ENVIRONMENT",
-                "arn:aws:s3:::ORGANIZATION-terraform-state-bucket-ENVIRONMENT/*"
+                "arn:aws:s3:::AWS_ACCOUNT_ID-terraform-state",
+                "arn:aws:s3:::AWS_ACCOUNT_ID-terraform-state/*"
             ]
         },
         {
@@ -35,22 +36,22 @@ Replace `ORGANIZATION` with the repository/organization name (same as ORGANIZATI
                 "dynamodb:DescribeTable",
                 "dynamodb:DescribeContinuousBackups",
                 "dynamodb:DescribeTimeToLive",
-                "dynamodb:ListTagsOfResource"
+                "dynamodb:ListTagsOfResource",
+                "dynamodb:TagResource",
+                "dynamodb:UpdateContinuousBackups"
             ],
-            "Resource": "arn:aws:dynamodb:AWS_REGION:*:table/ORGANIZATION-terraform-lock-table-ENVIRONMENT"
+            "Resource": "arn:aws:dynamodb:AWS_REGION:AWS_ACCOUNT_ID:table/AWS_ACCOUNT_ID-terraform-lock-table"
         },
         {
-            "Sid": "IAMOpenIdConnectProviderAndTerraformExecutionRole",
+            "Sid": "IAMOpenIdConnectProviderAndGithubActionsCicdRole",
             "Effect": "Allow",
             "Action": [
                 "iam:CreateOpenIDConnectProvider",
-                "iam:DeleteOpenIDConnectProvider",
                 "iam:GetOpenIDConnectProvider",
-                "iam:UpdateOpenIDConnectProviderThumbprint",
+                "iam:TagOpenIDConnectProvider",
                 "iam:CreateRole",
-                "iam:DeleteRole",
                 "iam:GetRole",
-                "iam:UpdateRole",
+                "iam:TagRole",
                 "iam:AttachRolePolicy",
                 "iam:DetachRolePolicy",
                 "iam:ListAttachedRolePolicies",
@@ -59,32 +60,21 @@ Replace `ORGANIZATION` with the repository/organization name (same as ORGANIZATI
             ],
             "Resource": [
                 "arn:aws:iam::*:oidc-provider/token.actions.githubusercontent.com",
-                "arn:aws:iam::*:role/terraform-execution-role"
+                "arn:aws:iam::*:role/github-actions-cicd-role"
             ]
         },
         {
-            "Sid": "IAMBasePolicyForTerraformExecutionRole",
+            "Sid": "IAMBasePolicyForGithubActionsCicdRole",
             "Effect": "Allow",
             "Action": [
                 "iam:CreatePolicy",
                 "iam:GetPolicy",
                 "iam:GetPolicyVersion",
-                "iam:DeletePolicy",
                 "iam:ListPolicyVersions",
-                "iam:CreatePolicyVersion"
+                "iam:CreatePolicyVersion",
+                "iam:TagPolicy"
             ],
-            "Resource": "arn:aws:iam::*:policy/terraform-base-policy"
-        },
-        {
-            "Sid": "IAMPassRole",
-            "Effect": "Allow",
-            "Action": "iam:PassRole",
-            "Resource": "arn:aws:iam::*:role/terraform-execution-role",
-            "Condition": {
-                "StringEquals": {
-                    "iam:PassedToService": "sts.amazonaws.com"
-                }
-            }
+            "Resource": "arn:aws:iam::*:policy/github-actions-cicd-policy"
         }
     ]
 }

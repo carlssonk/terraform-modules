@@ -12,12 +12,14 @@ provider "aws" {
   region = var.aws_region
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_s3_bucket" "this" {
-  bucket = "${var.organization}-terraform-state-bucket-${terraform.workspace}"
+  bucket = "${data.aws_caller_identity.current.account_id}-terraform-state"
 
   tags = {
-    Name        = "${var.organization}-terraform-state-bucket-${terraform.workspace}"
-    Environment = terraform.workspace
+    Name        = "${data.aws_caller_identity.current.account_id}-terraform-state"
+    Environment = "all"
     Purpose     = "terraform-state"
     ManagedBy   = "terraform"
     Component   = "bootstrap"
@@ -50,7 +52,7 @@ resource "aws_s3_bucket_public_access_block" "this" {
 }
 
 resource "aws_dynamodb_table" "this" {
-  name         = "${var.organization}-terraform-lock-table-${terraform.workspace}"
+  name         = "${data.aws_caller_identity.current.account_id}-terraform-lock-table"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID"
 
@@ -64,8 +66,8 @@ resource "aws_dynamodb_table" "this" {
   }
 
   tags = {
-    Name        = "${var.organization}-terraform-lock-table-${terraform.workspace}"
-    Environment = terraform.workspace
+    Name        = "${data.aws_caller_identity.current.account_id}-terraform-lock-table"
+    Environment = "all"
     Purpose     = "terraform-lock"
     ManagedBy   = "terraform"
     Component   = "bootstrap"
