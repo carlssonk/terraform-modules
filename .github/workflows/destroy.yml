@@ -50,8 +50,10 @@ jobs:
       id-token: write
       contents: write
     steps:
-      - name: Checkout
+      - name: Checkout terraform-modules
         uses: actions/checkout@v4
+        with:
+          repository: carlssonk/terraform-modules
 
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
