@@ -1,6 +1,6 @@
 output "subdomain_bucket_name" {
   description = "Name of the subdomain S3 bucket"
-  value       = module.subdomain_bucket.bucket_name
+  value       = module.subdomain_bucket.bucket_id
 }
 
 output "subdomain_bucket_arn" {
@@ -20,7 +20,7 @@ output "subdomain_website_url" {
 
 output "root_bucket_name" {
   description = "Name of the root domain S3 bucket (only if subdomain is 'www')"
-  value       = var.subdomain == "www" ? module.root_bucket[0].bucket_name : null
+  value       = var.subdomain == "www" ? module.root_bucket[0].bucket_id : null
 }
 
 output "root_bucket_arn" {

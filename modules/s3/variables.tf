@@ -151,7 +151,7 @@ variable "bucket_policy" {
   default = null
 
   validation {
-    condition     = var.bucket_policy == null || contains(["public", "cloudflare"], var.bucket_policy.name)
+    condition     = var.bucket_policy == null || (var.bucket_policy != null && contains(["public", "cloudflare"], lookup(var.bucket_policy, "name", "")))
     error_message = "Bucket policy name must be either 'public' or 'cloudflare'."
   }
 }
