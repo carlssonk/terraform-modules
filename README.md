@@ -2,7 +2,7 @@
 
 This guide shows you how to setup and use Terraform Modules provided by this project, in your own project, along with GHA integration.
 
-> See [app-template](TODO) for a complete example
+> See [app-template](https://github.com/carlssonk/app-template) for a complete example
 
 ### Repository & AWS setup
 1. If using `ad-m/github-push-action@master` in a workflow. Enable `Allow GitHub Actions to create and approve pull requests` in Github Actions -> General
