@@ -12,13 +12,13 @@ variable "apps" {
 }
 
 variable "environments" {
-  description = "List of environments (e.g., ['prod', 'dev', 'staging']). 'prod' is treated specially for subdomain naming."
+  description = "List of environments (e.g., ['production', 'dev', 'staging']). 'production' is treated specially for subdomain naming."
   type        = list(string)
-  default     = ["prod"]
+  default     = ["production"]
 
   validation {
-    condition     = contains(var.environments, "prod")
-    error_message = "Environments list must include 'prod'."
+    condition     = contains(var.environments, "production")
+    error_message = "Environments list must include 'production'."
   }
 }
 

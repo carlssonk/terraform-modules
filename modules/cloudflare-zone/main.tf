@@ -1,3 +1,10 @@
+# ============================================================================
+# ZONE-SCOPED MODULE
+# ============================================================================
+# This module manages zone-level Cloudflare resources that can only be 
+# declared ONCE per zone. Do NOT instantiate this module per environment.
+# ============================================================================
+
 locals {
   apps_grouped_by_root_domain = {
     for root_domain in distinct(values(var.apps)[*].root_domain) :
@@ -19,14 +26,14 @@ locals {
           format(
             "(%s%s)",
             format("http.host eq \"%s\" or http.host eq \"%s.%s\"", app.root_domain, app.subdomain, app.root_domain),
-            length([for env in var.environments : env if env != "prod"]) > 0 ?
+            length([for env in var.environments : env if env != "production"]) > 0 ?
             format(" or %s", join(" or ", [for env in var.environments :
               format("http.host eq \"%s.%s\"", env, app.root_domain)
-              if env != "prod"
+              if env != "production"
             ])) : ""
           )
           ) : join(" or ", [for env in var.environments :
-            env == "prod" ?
+            env == "production" ?
             format("http.host eq \"%s.%s\"", app.subdomain, app.root_domain) :
             format("http.host eq \"%s-%s.%s\"", app.subdomain, env, app.root_domain)
         ])
@@ -41,6 +48,8 @@ data "cloudflare_zone" "domain" {
   name     = each.key
 }
 
+# ZONE-SCOPED: Only one settings override per zone
+# Settings apply globally to all subdomains and environments
 resource "cloudflare_zone_settings_override" "this" {
   for_each = local.apps_grouped_by_root_domain
   zone_id  = data.cloudflare_zone.domain[each.key].id
@@ -87,6 +96,8 @@ resource "cloudflare_zone_settings_override" "this" {
   }
 }
 
+# ZONE-SCOPED: Only one ruleset per zone per phase
+# Rules target specific environments via host expressions
 resource "cloudflare_ruleset" "this" {
   for_each = var.create_rulesets ? { for k, v in local.apps_grouped_by_root_domain : k => v if length(local.ruleset_rules[k]) > 0 } : {}
   
