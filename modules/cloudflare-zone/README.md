@@ -29,9 +29,9 @@ module "cloudflare_dev" {
   # ...
 }
 
-module "cloudflare_prod" {
+module "cloudflare_production" {
   source       = "../../modules/cloudflare-zone"
-  environments = ["prod"]
+  environments = ["production"]
   # ...
 }
 ```
@@ -41,7 +41,7 @@ module "cloudflare_prod" {
 # Single instance with all environments
 module "cloudflare_zone" {
   source       = "../../modules/cloudflare-zone"
-  environments = ["dev", "staging", "prod"]  # All environments in one declaration
+  environments = ["dev", "staging", "production"]  # All environments in one declaration
   apps = {
     my_app = {
       app_name    = "my-app"
