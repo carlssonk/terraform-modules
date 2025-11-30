@@ -10,7 +10,7 @@ resource "cloudflare_dns_record" "this" {
   type    = each.value.type
   ttl     = each.value.ttl
   proxied = each.value.proxied
-  comment = lookup(each.value, "comment", null)
+  comment = lookup(each.value, "comment", "Manager by Terraform")
 
   # Value/content based on record type (for A, AAAA, CNAME, TXT, NS, MX)
   content = lookup(each.value, "data", null) == null ? each.value.value : null
