@@ -93,6 +93,6 @@ jobs:
             -backend-config="dynamodb_table=${AWS_ACCOUNT_ID}-terraform-lock-table" \
             -backend-config="key=bootstrap/terraform.tfstate"
 
-          terraform workspace select ${{ inputs.environment }} 2>/dev/null || terraform workspace new ${{ inputs.environment }}
+          terraform workspace select -or-create ${{ inputs.environment }}
           terraform apply -auto-approve
         working-directory: ./bootstrap/setup-permissions
