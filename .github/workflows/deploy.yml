@@ -55,7 +55,7 @@ jobs:
       id-token: write
       contents: write
     steps:
-      - name: Checkout branch
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Configure AWS Credentials (OIDC)
