@@ -56,52 +56,54 @@ locals {
   }
 }
 
-# ZONE-SCOPED: Only one settings override per zone
+# ZONE-SCOPED: Individual zone settings
 # Settings apply globally to all subdomains and environments
-resource "cloudflare_zone_settings_override" "this" {
-  for_each = local.apps_grouped_by_root_domain
-  zone_id  = local.zone_ids[each.key]
+locals {
+  # Flatten zone settings into individual resources
+  zone_settings_map = merge([
+    for domain in keys(local.apps_grouped_by_root_domain) : {
+      # SSL/TLS
+      "${domain}_ssl"                      = { zone_id = local.zone_ids[domain], setting_id = "ssl", value = lookup(var.zone_settings, "ssl", "full") }
+      "${domain}_always_use_https"         = { zone_id = local.zone_ids[domain], setting_id = "always_use_https", value = lookup(var.zone_settings, "always_use_https", "on") }
+      "${domain}_min_tls_version"          = { zone_id = local.zone_ids[domain], setting_id = "min_tls_version", value = lookup(var.zone_settings, "min_tls_version", "1.2") }
+      "${domain}_automatic_https_rewrites" = { zone_id = local.zone_ids[domain], setting_id = "automatic_https_rewrites", value = lookup(var.zone_settings, "automatic_https_rewrites", "on") }
+      "${domain}_tls_1_3"                  = { zone_id = local.zone_ids[domain], setting_id = "tls_1_3", value = lookup(var.zone_settings, "tls_1_3", "on") }
 
-  settings {
-    # SSL/TLS
-    ssl                      = lookup(var.zone_settings, "ssl", "full")
-    always_use_https         = lookup(var.zone_settings, "always_use_https", "on")
-    min_tls_version          = lookup(var.zone_settings, "min_tls_version", "1.2")
-    automatic_https_rewrites = lookup(var.zone_settings, "automatic_https_rewrites", "on")
-    tls_1_3                  = lookup(var.zone_settings, "tls_1_3", "on")
+      # Security
+      "${domain}_security_level"           = { zone_id = local.zone_ids[domain], setting_id = "security_level", value = lookup(var.zone_settings, "security_level", "medium") }
+      "${domain}_browser_check"            = { zone_id = local.zone_ids[domain], setting_id = "browser_check", value = lookup(var.zone_settings, "browser_check", "on") }
+      "${domain}_challenge_ttl"            = { zone_id = local.zone_ids[domain], setting_id = "challenge_ttl", value = lookup(var.zone_settings, "challenge_ttl", 1800) }
+      "${domain}_privacy_pass"             = { zone_id = local.zone_ids[domain], setting_id = "privacy_pass", value = lookup(var.zone_settings, "privacy_pass", "on") }
 
-    # Security
-    security_level           = lookup(var.zone_settings, "security_level", "medium")
-    browser_check            = lookup(var.zone_settings, "browser_check", "on")
-    challenge_ttl            = lookup(var.zone_settings, "challenge_ttl", 1800)
-    privacy_pass             = lookup(var.zone_settings, "privacy_pass", "on")
+      # Performance
+      "${domain}_brotli"                   = { zone_id = local.zone_ids[domain], setting_id = "brotli", value = lookup(var.zone_settings, "brotli", "on") }
+      "${domain}_early_hints"              = { zone_id = local.zone_ids[domain], setting_id = "early_hints", value = lookup(var.zone_settings, "early_hints", "off") }
+      "${domain}_http2"                    = { zone_id = local.zone_ids[domain], setting_id = "http2", value = lookup(var.zone_settings, "http2", "on") }
+      "${domain}_http3"                    = { zone_id = local.zone_ids[domain], setting_id = "http3", value = lookup(var.zone_settings, "http3", "on") }
+      "${domain}_zero_rtt"                 = { zone_id = local.zone_ids[domain], setting_id = "0rtt", value = lookup(var.zone_settings, "zero_rtt", "on") }
 
+      # Caching
+      "${domain}_browser_cache_ttl"        = { zone_id = local.zone_ids[domain], setting_id = "browser_cache_ttl", value = lookup(var.zone_settings, "browser_cache_ttl", 14400) }
+      
+      # Network
+      "${domain}_ipv6"                     = { zone_id = local.zone_ids[domain], setting_id = "ipv6", value = lookup(var.zone_settings, "ipv6", "on") }
+      "${domain}_websockets"               = { zone_id = local.zone_ids[domain], setting_id = "websockets", value = lookup(var.zone_settings, "websockets", "on") }
+      "${domain}_opportunistic_encryption" = { zone_id = local.zone_ids[domain], setting_id = "opportunistic_encryption", value = lookup(var.zone_settings, "opportunistic_encryption", "on") }
+      "${domain}_opportunistic_onion"      = { zone_id = local.zone_ids[domain], setting_id = "opportunistic_onion", value = lookup(var.zone_settings, "opportunistic_onion", "on") }
 
-    # Performance
-    brotli                   = lookup(var.zone_settings, "brotli", "on")
-    early_hints              = lookup(var.zone_settings, "early_hints", "off")
-    http2                    = lookup(var.zone_settings, "http2", "on")
-    http3                    = lookup(var.zone_settings, "http3", "on")
-    zero_rtt                 = lookup(var.zone_settings, "zero_rtt", "on")
-    minify {
-      css  = lookup(var.zone_settings, "minify_css", "on")
-      js   = lookup(var.zone_settings, "minify_js", "on")
-      html = lookup(var.zone_settings, "minify_html", "on")
+      # Other
+      "${domain}_development_mode"         = { zone_id = local.zone_ids[domain], setting_id = "development_mode", value = lookup(var.zone_settings, "development_mode", "off") }
+      "${domain}_rocket_loader"            = { zone_id = local.zone_ids[domain], setting_id = "rocket_loader", value = lookup(var.zone_settings, "rocket_loader", "off") }
     }
+  ]...)
+}
 
-    # Caching
-    browser_cache_ttl        = lookup(var.zone_settings, "browser_cache_ttl", 14400)
-    
-    # Network
-    ipv6                     = lookup(var.zone_settings, "ipv6", "on")
-    websockets               = lookup(var.zone_settings, "websockets", "on")
-    opportunistic_encryption = lookup(var.zone_settings, "opportunistic_encryption", "on")
-    opportunistic_onion      = lookup(var.zone_settings, "opportunistic_onion", "on")
+resource "cloudflare_zone_setting" "this" {
+  for_each = local.zone_settings_map
 
-    # Other
-    development_mode         = lookup(var.zone_settings, "development_mode", "off")
-    rocket_loader            = lookup(var.zone_settings, "rocket_loader", "off")
-  }
+  zone_id    = each.value.zone_id
+  setting_id = each.value.setting_id
+  value      = each.value.value
 }
 
 # ZONE-SCOPED: Only one ruleset per zone per phase

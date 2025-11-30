@@ -12,10 +12,10 @@ output "zone_names" {
 }
 
 output "zone_settings" {
-  description = "Map of root domains to their zone settings override IDs"
+  description = "Map of zone settings keys to their IDs"
   value = {
-    for domain, settings in cloudflare_zone_settings_override.this :
-    domain => settings.id
+    for key, setting in cloudflare_zone_setting.this :
+    key => setting.id
   }
 }
 

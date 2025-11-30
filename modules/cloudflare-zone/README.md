@@ -10,7 +10,7 @@ This module manages **zone-level** Cloudflare resources that can only be declare
 
 ### Resources Managed (Zone-Level Only)
 
-- **`cloudflare_zone_settings_override`** - Global zone settings (SSL, security, performance, etc.)
+- **`cloudflare_zone_setting`** - Individual zone settings (SSL, security, performance, etc.)
   - Only ONE settings override per zone
   - Applies to ALL subdomains and environments within the zone
 
