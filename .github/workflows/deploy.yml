@@ -84,7 +84,7 @@ jobs:
 
       - name: Terraform ${{ inputs.action == 'plan' && 'Plan' || 'Apply' }}
         run: |
-          terraform workspace select ${{ inputs.environment }} 2>/dev/null || terraform workspace new ${{ inputs.environment }}
+          terraform workspace select -or-create ${{ inputs.environment }}
           
           if [ "${{ inputs.action }}" = "plan" ]; then
             terraform plan

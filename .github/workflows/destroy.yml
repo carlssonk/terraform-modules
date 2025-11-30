@@ -79,6 +79,6 @@ jobs:
 
       - name: Terraform Destroy
         run: |
-          terraform workspace select ${{ inputs.environment }} 2>/dev/null || terraform workspace new ${{ inputs.environment }}
+          terraform workspace select -or-create ${{ inputs.environment }}
           terraform destroy -auto-approve
         working-directory: ${{ inputs.tf_root_directory }}
