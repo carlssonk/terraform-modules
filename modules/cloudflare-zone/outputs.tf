@@ -1,16 +1,13 @@
 output "zone_ids" {
   description = "Map of root domains to their Cloudflare zone IDs"
-  value = {
-    for domain, zone in data.cloudflare_zone.domain :
-    domain => zone.id
-  }
+  value       = local.zone_ids
 }
 
 output "zone_names" {
   description = "Map of root domains to their zone names"
   value = {
-    for domain, zone in data.cloudflare_zone.domain :
-    domain => zone.name
+    for domain in keys(local.apps_grouped_by_root_domain) :
+    domain => data.cloudflare_zones.domain[domain].result[0].name
   }
 }
 

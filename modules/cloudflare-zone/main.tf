@@ -43,16 +43,24 @@ locals {
   }
 }
 
-data "cloudflare_zone" "domain" {
+data "cloudflare_zones" "domain" {
   for_each = local.apps_grouped_by_root_domain
-  name     = each.key
+  
+  name = each.key
+}
+
+locals {
+  zone_ids = {
+    for domain in keys(local.apps_grouped_by_root_domain) :
+    domain => data.cloudflare_zones.domain[domain].result[0].id
+  }
 }
 
 # ZONE-SCOPED: Only one settings override per zone
 # Settings apply globally to all subdomains and environments
 resource "cloudflare_zone_settings_override" "this" {
   for_each = local.apps_grouped_by_root_domain
-  zone_id  = data.cloudflare_zone.domain[each.key].id
+  zone_id  = local.zone_ids[each.key]
 
   settings {
     # SSL/TLS
@@ -101,13 +109,13 @@ resource "cloudflare_zone_settings_override" "this" {
 resource "cloudflare_ruleset" "this" {
   for_each = var.create_rulesets ? { for k, v in local.apps_grouped_by_root_domain : k => v if length(local.ruleset_rules[k]) > 0 } : {}
   
-  zone_id     = data.cloudflare_zone.domain[each.key].id
+  zone_id     = local.zone_ids[each.key]
   name        = "Dynamic Main Ruleset"
   description = "Dynamic ruleset for managing app settings"
   kind        = "zone"
   phase       = "http_config_settings"
 
-  rules = jsonencode([
+  rules = [
     for rule in local.ruleset_rules[each.key] : {
       action      = rule.action
       expression  = rule.expression
@@ -116,7 +124,7 @@ resource "cloudflare_ruleset" "this" {
         ssl = lookup(lookup(rule, "action_parameters", {}), "ssl", null)
       }
     }
-  ])
+  ]
 }
 
 
