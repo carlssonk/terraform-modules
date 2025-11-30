@@ -1,0 +1,82 @@
+name: Destroy Infrastructure
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        description: "Environment to destroy"
+        required: true
+      aws_region:
+        type: string
+        description: "AWS Region"
+        required: true
+      organization:
+        type: string
+        description: "Organization name"
+        required: true
+      aws_account_id:
+        type: string
+        description: "AWS Account ID"
+        required: true
+      tf_root_directory:
+        type: string
+        description: "Terraform root directory (e.g., ./environments/prod)"
+        required: true
+      terraform_version:
+        type: string
+        description: "Terraform version to use"
+        required: false
+        default: "1.9.7"
+    secrets:
+      CLOUDFLARE_API_TOKEN:
+        required: false
+  
+concurrency: 
+  group: ${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  TF_VAR_aws_region: ${{ inputs.aws_region }}
+  TF_VAR_organization: ${{ inputs.organization }}
+
+jobs:
+  terraform-destroy:
+    name: Destroy Infrastructure
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/github-actions-cicd-role
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ inputs.terraform_version || '1.9.7' }}
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -input=false \
+            -backend-config="encrypt=true" \
+            -backend-config="region=${{ inputs.aws_region }}" \
+            -backend-config="bucket=${{ inputs.organization }}-terraform-state-bucket-${{ inputs.environment }}" \
+            -backend-config="dynamodb_table=${{ inputs.organization }}-terraform-lock-table-${{ inputs.environment }}" \
+            -backend-config="key=terraform.tfstate"
+        working-directory: ${{ inputs.tf_root_directory }}
+
+      - name: Terraform Destroy
+        run: |
+          terraform workspace select ${{ inputs.environment }} 2>/dev/null || terraform workspace new ${{ inputs.environment }}
+          terraform destroy -auto-approve
+        working-directory: ${{ inputs.tf_root_directory }}

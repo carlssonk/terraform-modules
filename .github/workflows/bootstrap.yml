@@ -1,0 +1,93 @@
+name: Bootstrap
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        description: "Environment to bootstrap"
+        required: true
+      aws_region:
+        type: string
+        description: "AWS Region"
+        required: true
+      organization:
+        type: string
+        description: "Organization/repository owner name"
+        required: true
+      terraform_version:
+        type: string
+        description: "Terraform version to use"
+        required: false
+        default: "1.9.7"
+    secrets:
+      BOOTSTRAP_AWS_ACCESS_KEY:
+        required: true
+      BOOTSTRAP_AWS_ACCESS_SECRET:
+        required: true
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  TF_VAR_aws_region: ${{ inputs.aws_region }}
+  TF_VAR_organization: ${{ inputs.organization }}
+  TF_VAR_repository: ${{ github.event.repository.name }}
+
+jobs:
+  bootstrap:
+    name: Bootstrap
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.BOOTSTRAP_AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.BOOTSTRAP_AWS_ACCESS_SECRET }}
+          aws-region: ${{ inputs.aws_region }}
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ inputs.terraform_version || '1.9.7' }}
+
+      - name: Check if Terraform backend exists
+        id: check_backend
+        run: |
+          BUCKET_NAME="${{ inputs.organization }}-terraform-state-bucket-${{ inputs.environment }}"
+          TABLE_NAME="${{ inputs.organization }}-terraform-lock-table-${{ inputs.environment }}"
+          
+          if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null && \
+              aws dynamodb describe-table --table-name "$TABLE_NAME" 2>/dev/null; then
+            echo "backend_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "backend_exists=false" >> $GITHUB_OUTPUT
+          fi
+    
+      - name: Setup Backend
+        if: steps.check_backend.outputs.backend_exists == 'false'
+        run: |
+          terraform init
+          terraform workspace select ${{ inputs.environment }} 2>/dev/null || terraform workspace new ${{ inputs.environment }}
+          terraform apply -auto-approve
+        working-directory: ./bootstrap/setup-backend
+
+      - name: Sleep 15 seconds
+        if: steps.check_backend.outputs.backend_exists == 'false'
+        run: sleep 15
+
+      - name: Setup Permissions
+        run: |
+          terraform init \
+            -backend-config="encrypt=true" \
+            -backend-config="region=${{ inputs.aws_region }}" \
+            -backend-config="bucket=${{ inputs.organization }}-terraform-state-bucket-${{ inputs.environment }}" \
+            -backend-config="dynamodb_table=${{ inputs.organization }}-terraform-lock-table-${{ inputs.environment }}" \
+            -backend-config="key=bootstrap/terraform.tfstate"
+
+          terraform workspace select ${{ inputs.environment }} 2>/dev/null || terraform workspace new ${{ inputs.environment }}
+          terraform apply -auto-approve
+        working-directory: ./bootstrap/setup-permissions
