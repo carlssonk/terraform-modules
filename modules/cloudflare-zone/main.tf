@@ -37,7 +37,7 @@ locals {
             format("http.host eq \"%s.%s\"", app.subdomain, app.root_domain) :
             format("http.host eq \"%s-%s.%s\"", app.subdomain, env, app.root_domain)
         ])
-        description = "Cloudflare rules for ${app.app_name}"
+        description = "Cloudflare rules for ${app.subdomain}.${app.root_domain}"
       }] : []
     ])
   }

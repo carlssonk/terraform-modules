@@ -1,8 +1,7 @@
 variable "apps" {
-  description = "Map of application configurations. Each app should have: app_name, root_domain, subdomain, and cloudflare settings."
+  description = "Map of application configurations. Each app should have: root_domain, subdomain, and cloudflare settings."
   type        = any
   # type = map(object({
-  #   app_name    = string
   #   root_domain = string
   #   subdomain   = string
   #   cloudflare = object({
