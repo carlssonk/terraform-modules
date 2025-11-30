@@ -79,9 +79,16 @@ jobs:
         run: |
           terraform workspace select -or-create ${{ inputs.environment }}
           
+          # Check if tfvars file exists
+          TFVARS_FILE="${{ inputs.environment }}.tfvars"
+          VAR_FILE_FLAG=""
+          if [ -f "$TFVARS_FILE" ]; then
+            VAR_FILE_FLAG="-var-file='$TFVARS_FILE'"
+          fi
+          
           if [ "${{ inputs.action }}" = "plan" ]; then
-            terraform plan -var-file='${{ inputs.environment }}.tfvars'
+            terraform plan $VAR_FILE_FLAG
           else
-            terraform apply -auto-approve -var-file='${{ inputs.environment }}.tfvars'
+            terraform apply -auto-approve $VAR_FILE_FLAG
           fi
         working-directory: ${{ inputs.tf_root_directory }}

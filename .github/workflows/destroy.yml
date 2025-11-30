@@ -73,5 +73,13 @@ jobs:
       - name: Terraform Destroy
         run: |
           terraform workspace select -or-create ${{ inputs.environment }}
-          terraform destroy -auto-approve -var-file='${{ inputs.environment }}.tfvars'
+          
+          # Check if tfvars file exists
+          TFVARS_FILE="${{ inputs.environment }}.tfvars"
+          VAR_FILE_FLAG=""
+          if [ -f "$TFVARS_FILE" ]; then
+            VAR_FILE_FLAG="-var-file='$TFVARS_FILE'"
+          fi
+          
+          terraform destroy -auto-approve $VAR_FILE_FLAG
         working-directory: ${{ inputs.tf_root_directory }}
