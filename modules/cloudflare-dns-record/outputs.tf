@@ -14,10 +14,10 @@ output "dns_records" {
     for key, record in cloudflare_dns_record.this :
     key => {
       id       = record.id
-      hostname = record.hostname
+      hostname = record.name
       name     = record.name
       type     = record.type
-      content  = record.content
+      value    = record.value
       ttl      = record.ttl
       proxied  = record.proxied
     }
@@ -36,7 +36,7 @@ output "dns_record_hostnames" {
   description = "Map of DNS record keys to their full hostnames"
   value = {
     for key, record in cloudflare_dns_record.this :
-    key => record.hostname
+    key => record.name
   }
 }
 
