@@ -11,20 +11,17 @@ variable "root_domain" {
 variable "dns_records" {
   description = "Map of DNS records to create. Key is a unique identifier, value is the record configuration."
   type = map(object({
-    name            = string
-    value           = string
-    type            = optional(string, "CNAME")
-    ttl             = optional(number, 1) # 1 = automatic, or specify seconds
-    proxied         = optional(bool, true)
-    priority        = optional(number) # For MX records
-    allow_overwrite = optional(bool, false)
-    comment         = optional(string)
-    tags            = optional(list(string), [])
+    name     = string
+    value    = string
+    type     = optional(string, "CNAME")
+    ttl      = optional(number, 1) # 1 = automatic, or specify seconds
+    proxied  = optional(bool, true)
+    priority = optional(number) # For MX, SRV, and URI records
+    comment  = optional(string)
+    tags     = optional(list(string), [])
     data = optional(object({
       # For SRV records
       service  = optional(string)
-      proto    = optional(string)
-      name     = optional(string)
       priority = optional(number)
       weight   = optional(number)
       port     = optional(number)
