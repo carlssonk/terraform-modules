@@ -6,9 +6,9 @@ This guide shows you how to setup and use Terraform Modules provided by this pro
 
 ### Repository & AWS setup
 1. If using `ad-m/github-push-action@master` in a workflow. Enable `Allow GitHub Actions to create and approve pull requests` in Github Actions -> General
-2. Add `AWS_REGION` and `ORGANIZATION` to repository variables
+2. Add `AWS_REGION` to repository variables
 3. Create a new AWS account for the environment you want to bootstrap. (or use an existing account; you can reset it with [aws-nuke](https://github.com/ekristen/aws-nuke))
-4. Create a new IAM bootstrap user and add [this](bootstrap/README.md) as inline policy
+4. Create a new IAM bootstrap user and add [this](bootstrap/README.md) as inline policy (replace `AWS_ACCOUNT_ID` and `AWS_REGION` placeholders)
 5. Create secret access key from the bootstrap user and save the access key and access secret for the next step
 6. Set up a new repository environment in Github (Settings -> Environments) and add `BOOTSTRAP_AWS_ACCESS_KEY` and `BOOTSTRAP_AWS_ACCESS_SECRET` as secrets for the environment
 7. Done

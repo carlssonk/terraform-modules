@@ -11,10 +11,6 @@ on:
         type: string
         description: "AWS Region"
         required: true
-      organization:
-        type: string
-        description: "Organization name"
-        required: true
       aws_account_id:
         type: string
         description: "AWS Account ID"
@@ -39,7 +35,6 @@ concurrency:
 env:
   TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   TF_VAR_aws_region: ${{ inputs.aws_region }}
-  TF_VAR_organization: ${{ inputs.organization }}
 
 jobs:
   terraform-destroy:

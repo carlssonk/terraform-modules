@@ -15,6 +15,8 @@ terraform {
   backend "s3" {}
 }
 
+data "aws_caller_identity" "current" {}
+
 locals {
   oidc_domain           = "token.actions.githubusercontent.com"
   github_actions_cicd_policy = "github-actions-cicd-policy"
@@ -96,8 +98,8 @@ resource "aws_iam_policy" "github_actions_cicd_policy" {
           "s3:ListBucket"
         ],
         Resource = [
-          "arn:aws:s3:::${var.organization}-terraform-state-bucket-${terraform.workspace}",
-          "arn:aws:s3:::${var.organization}-terraform-state-bucket-${terraform.workspace}/*"
+          "arn:aws:s3:::${data.aws_caller_identity.current.account_id}-terraform-state",
+          "arn:aws:s3:::${data.aws_caller_identity.current.account_id}-terraform-state/*"
         ]
       },
       # Backend management (dynamodb)
@@ -108,7 +110,7 @@ resource "aws_iam_policy" "github_actions_cicd_policy" {
           "dynamodb:PutItem",
           "dynamodb:DeleteItem"
         ],
-        Resource = "arn:aws:dynamodb:${var.aws_region}:*:table/${var.organization}-terraform-lock-table-${terraform.workspace}"
+        Resource = "arn:aws:dynamodb:${var.aws_region}:*:table/${data.aws_caller_identity.current.account_id}-terraform-lock-table"
       },
       # OpenID Connect Provider
       {
