@@ -17,7 +17,7 @@ output "dns_records" {
       hostname = record.name
       name     = record.name
       type     = record.type
-      value    = record.value
+      value    = record.content
       ttl      = record.ttl
       proxied  = record.proxied
     }
