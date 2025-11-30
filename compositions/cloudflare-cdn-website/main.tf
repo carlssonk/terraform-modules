@@ -37,8 +37,8 @@ module "root_bucket" {
   depends_on = [module.subdomain_bucket]
 }
 
-module "cloudflare_record" {
-  source      = "../../modules/cloudflare-record"
+module "cloudflare_dns_record" {
+  source      = "../../modules/cloudflare-dns-record"
   root_domain = var.root_domain
   dns_records = merge(
     {

@@ -35,7 +35,7 @@ output "root_website_endpoint" {
 
 output "cloudflare_dns_records" {
   description = "Map of created DNS records"
-  value       = module.cloudflare_record.dns_records
+  value       = module.cloudflare_dns_record.dns_records
 }
 
 output "domain_name" {
