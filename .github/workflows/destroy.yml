@@ -47,8 +47,6 @@ jobs:
     steps:
       - name: Checkout terraform-modules
         uses: actions/checkout@v4
-        with:
-          repository: carlssonk/terraform-modules
 
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
