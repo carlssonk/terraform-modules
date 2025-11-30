@@ -59,8 +59,9 @@ jobs:
       - name: Check if Terraform backend exists
         id: check_backend
         run: |
-          BUCKET_NAME="${{ inputs.organization }}-terraform-state-bucket-${{ inputs.environment }}"
-          TABLE_NAME="${{ inputs.organization }}-terraform-lock-table-${{ inputs.environment }}"
+          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          BUCKET_NAME="${AWS_ACCOUNT_ID}-terraform-state"
+          TABLE_NAME="${AWS_ACCOUNT_ID}-terraform-lock-table"
           
           if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null && \
               aws dynamodb describe-table --table-name "$TABLE_NAME" 2>/dev/null; then
@@ -83,11 +84,13 @@ jobs:
 
       - name: Setup Permissions
         run: |
+          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          
           terraform init \
             -backend-config="encrypt=true" \
             -backend-config="region=${{ inputs.aws_region }}" \
-            -backend-config="bucket=${{ inputs.organization }}-terraform-state-bucket-${{ inputs.environment }}" \
-            -backend-config="dynamodb_table=${{ inputs.organization }}-terraform-lock-table-${{ inputs.environment }}" \
+            -backend-config="bucket=${AWS_ACCOUNT_ID}-terraform-state" \
+            -backend-config="dynamodb_table=${AWS_ACCOUNT_ID}-terraform-lock-table" \
             -backend-config="key=bootstrap/terraform.tfstate"
 
           terraform workspace select ${{ inputs.environment }} 2>/dev/null || terraform workspace new ${{ inputs.environment }}
