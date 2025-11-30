@@ -40,7 +40,7 @@ Replace `AWS_REGION` with the AWS region
                 "dynamodb:TagResource",
                 "dynamodb:UpdateContinuousBackups"
             ],
-            "Resource": "arn:aws:dynamodb:AWS_REGION:AWS_ACCOUNT_ID:table/AWS_ACCOUNT_ID-terraform-lock-table"
+            "Resource": "arn:aws:dynamodb:AWS_REGION:*:table/AWS_ACCOUNT_ID-terraform-lock-table"
         },
         {
             "Sid": "IAMOpenIdConnectProviderAndGithubActionsCicdRole",
