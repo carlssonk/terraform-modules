@@ -5,7 +5,7 @@ data "cloudflare_zones" "domain" {
 resource "cloudflare_dns_record" "this" {
   for_each = var.dns_records
 
-  zone_id = data.cloudflare_zones.domain.zones[0].id
+  zone_id = data.cloudflare_zones.domain.result[0].id
   name    = each.value.name
   type    = each.value.type
   ttl     = each.value.ttl
