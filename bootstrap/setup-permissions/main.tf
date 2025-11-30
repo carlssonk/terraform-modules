@@ -142,17 +142,13 @@ resource "aws_iam_policy" "github_actions_cicd_policy" {
         ]
         Resource = "*"
       },
-      # Tagging permissions
-      {
-        Effect = "Allow"
-        Action = ["*:*Tags*"]
-        Resource = "*"
-      },
       # AWS Services (wildcard for development speed)
       {
         Effect = "Allow"
         Action = [
+          "iam:*Tags*",
           "s3:*",
+          "dynamodb:*",
           "ecs:*",
           "ec2:*",
           "elasticloadbalancing:*",
@@ -161,7 +157,7 @@ resource "aws_iam_policy" "github_actions_cicd_policy" {
           "rds:*",
           "secretsmanager:*",
           "acm:*",
-          "route53:*"
+          "route53:*",
         ]
         Resource = "*"
       },
