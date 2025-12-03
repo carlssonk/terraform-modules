@@ -32,19 +32,20 @@ on:
     secrets:
       CLOUDFLARE_API_TOKEN:
         required: false
-  
-concurrency: 
-  group: ${{ inputs.environment }}
+
+concurrency:
+  group: terraform-destroy-${{ inputs.environment }}-${{ inputs.state_key }}
   cancel-in-progress: false
 
 env:
-  TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   TF_VAR_aws_region: ${{ inputs.aws_region }}
+  TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
 jobs:
   terraform-destroy:
-    name: Destroy Infrastructure
+    name: Destroy Infrastructure - ${{ inputs.environment }}
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     environment: ${{ inputs.environment }}
     permissions:
       id-token: write
@@ -75,6 +76,22 @@ jobs:
             -backend-config="key=${{ inputs.state_key }}"
         working-directory: ${{ inputs.tf_root_directory }}
 
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: ${{ inputs.tf_root_directory }}
+        continue-on-error: true
+
+      - name: Show Current State
+        run: |
+          echo "Current workspace:"
+          terraform workspace show
+          
+          echo ""
+          echo "Resources to be destroyed:"
+          terraform state list || echo "No resources in state"
+        working-directory: ${{ inputs.tf_root_directory }}
+        continue-on-error: true
+
       - name: Terraform Destroy
         run: |
           terraform workspace select -or-create ${{ inputs.environment }}
@@ -84,7 +101,49 @@ jobs:
           VAR_FILE_FLAG=""
           if [ -f "$TFVARS_FILE" ]; then
             VAR_FILE_FLAG="-var-file=$TFVARS_FILE"
+            echo "Using tfvars file: $TFVARS_FILE"
+          else
+            echo "No tfvars file found for ${{ inputs.environment }}"
           fi
           
-          terraform destroy -auto-approve $VAR_FILE_FLAG
+          echo "⚠️  Starting terraform destroy..."
+          terraform destroy -auto-approve $VAR_FILE_FLAG -no-color
+          echo "✅ Destroy complete"
         working-directory: ${{ inputs.tf_root_directory }}
+
+      - name: Verify Destruction
+        run: |
+          echo "Verifying all resources were destroyed..."
+          REMAINING=$(terraform state list 2>/dev/null | wc -l)
+          
+          if [ "$REMAINING" -eq 0 ]; then
+            echo "✅ All resources successfully destroyed"
+          else
+            echo "⚠️  Warning: $REMAINING resources still in state:"
+            terraform state list
+            echo ""
+            echo "This may indicate:"
+            echo "1. Resources that couldn't be destroyed (check logs above)"
+            echo "2. Data sources or other non-destructible items"
+            echo "3. Manual cleanup may be required"
+          fi
+        working-directory: ${{ inputs.tf_root_directory }}
+        continue-on-error: true
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 🗑️ Destroy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **State Key**: ${{ inputs.state_key }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Terraform Directory**: ${{ inputs.tf_root_directory }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Infrastructure successfully destroyed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Destroy operation failed - manual cleanup may be required" >> $GITHUB_STEP_SUMMARY
+          fi
+
