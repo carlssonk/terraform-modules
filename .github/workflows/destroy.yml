@@ -71,8 +71,8 @@ jobs:
             -input=false \
             -backend-config="encrypt=true" \
             -backend-config="region=${{ inputs.aws_region }}" \
-            -backend-config="bucket=${{ inputs.aws_account_id }}-terraform-state" \
-            -backend-config="dynamodb_table=${{ inputs.aws_account_id }}-terraform-lock-table" \
+            -backend-config="bucket=terraform-state-${{ inputs.aws_account_id }}" \
+            -backend-config="dynamodb_table=terraform-lock-table-${{ inputs.aws_account_id }}" \
             -backend-config="key=${{ inputs.state_key }}"
         working-directory: ${{ inputs.tf_root_directory }}
 

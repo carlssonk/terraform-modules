@@ -75,8 +75,8 @@ jobs:
         id: check_backend
         run: |
           AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          BUCKET_NAME="${AWS_ACCOUNT_ID}-terraform-state"
-          TABLE_NAME="${AWS_ACCOUNT_ID}-terraform-lock-table"
+          BUCKET_NAME="terraform-state-${AWS_ACCOUNT_ID}"
+          TABLE_NAME="terraform-lock-table-${AWS_ACCOUNT_ID}"
           
           echo "Checking for existing backend resources..."
           echo "Bucket: ${BUCKET_NAME}"
@@ -89,14 +89,14 @@ jobs:
             echo "✅ S3 bucket exists"
             BUCKET_EXISTS=true
           else
-            echo "❌ S3 bucket does not exist"
+            echo "S3 bucket does not exist"
           fi
           
           if aws dynamodb describe-table --table-name "$TABLE_NAME" 2>/dev/null; then
             echo "✅ DynamoDB table exists"
             TABLE_EXISTS=true
           else
-            echo "❌ DynamoDB table does not exist"
+            echo "DynamoDB table does not exist"
           fi
           
           if [ "$BUCKET_EXISTS" = true ] && [ "$TABLE_EXISTS" = true ]; then
@@ -119,38 +119,6 @@ jobs:
           echo "✅ Backend setup complete"
         working-directory: ./bootstrap/setup-backend
 
-      - name: Wait for backend propagation
-        if: steps.check_backend.outputs.backend_exists == 'false'
-        run: |
-          echo "⏳ Waiting 15 seconds for AWS resources to propagate..."
-          sleep 15
-          echo "✅ Wait complete"
-
-      - name: Verify backend creation
-        if: steps.check_backend.outputs.backend_exists == 'false'
-        run: |
-          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          BUCKET_NAME="${AWS_ACCOUNT_ID}-terraform-state"
-          TABLE_NAME="${AWS_ACCOUNT_ID}-terraform-lock-table"
-          
-          echo "Verifying backend resources were created..."
-          
-          if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
-            echo "✅ S3 bucket verified: ${BUCKET_NAME}"
-          else
-            echo "❌ S3 bucket not found: ${BUCKET_NAME}"
-            exit 1
-          fi
-          
-          if aws dynamodb describe-table --table-name "$TABLE_NAME" 2>/dev/null; then
-            echo "✅ DynamoDB table verified: ${TABLE_NAME}"
-          else
-            echo "❌ DynamoDB table not found: ${TABLE_NAME}"
-            exit 1
-          fi
-          
-          echo "✅ Backend verification complete"
-
       - name: Setup Permissions
         run: |
           echo "🚀 Setting up IAM permissions (OIDC, roles, policies)..."
@@ -160,8 +128,8 @@ jobs:
           terraform init -no-color \
             -backend-config="encrypt=true" \
             -backend-config="region=${{ inputs.aws_region }}" \
-            -backend-config="bucket=${AWS_ACCOUNT_ID}-terraform-state" \
-            -backend-config="dynamodb_table=${AWS_ACCOUNT_ID}-terraform-lock-table" \
+            -backend-config="bucket=terraform-state-${AWS_ACCOUNT_ID}" \
+            -backend-config="dynamodb_table=terraform-lock-table-${AWS_ACCOUNT_ID}" \
             -backend-config="key=bootstrap/terraform.tfstate"
 
           terraform workspace select -or-create ${{ inputs.environment }}
@@ -169,72 +137,3 @@ jobs:
           
           echo "✅ Permissions setup complete"
         working-directory: ./bootstrap/setup-permissions
-
-      - name: Display created resources
-        if: always()
-        run: |
-          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          
-          echo "📋 Listing created resources..."
-          echo ""
-          
-          echo "S3 Bucket:"
-          aws s3 ls | grep "${AWS_ACCOUNT_ID}-terraform-state" || echo "Not found"
-          
-          echo ""
-          echo "DynamoDB Table:"
-          aws dynamodb list-tables --query "TableNames[?contains(@, '${AWS_ACCOUNT_ID}-terraform-lock-table')]" --output text || echo "Not found"
-          
-          echo ""
-          echo "IAM OIDC Provider:"
-          aws iam list-open-id-connect-providers --query "OpenIDConnectProviderList[?contains(Arn, 'token.actions.githubusercontent.com')]" --output text || echo "Not found"
-          
-          echo ""
-          echo "IAM Roles:"
-          aws iam list-roles --query "Roles[?contains(RoleName, 'github-actions')].RoleName" --output text || echo "Not found"
-        continue-on-error: true
-
-      - name: Summary
-        if: always()
-        run: |
-          echo "## 🚀 Bootstrap Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment**: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **AWS Region**: ${{ inputs.aws_region }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Organization**: ${{ inputs.organization }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Repository**: ${{ github.event.repository.name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ job.status }}" = "success" ]; then
-            echo "### ✅ Bootstrap Complete" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "The following resources have been created:" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            
-            AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-            
-            echo "**Backend:**" >> $GITHUB_STEP_SUMMARY
-            echo "- S3 Bucket: \`${AWS_ACCOUNT_ID}-terraform-state\`" >> $GITHUB_STEP_SUMMARY
-            echo "- DynamoDB Table: \`${AWS_ACCOUNT_ID}-terraform-lock-table\`" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Permissions:**" >> $GITHUB_STEP_SUMMARY
-            echo "- OIDC Provider: \`token.actions.githubusercontent.com\`" >> $GITHUB_STEP_SUMMARY
-            echo "- IAM Role: \`github-actions-cicd-role\`" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### 🎯 Next Steps" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "1. Your GitHub Actions workflows can now use OIDC authentication" >> $GITHUB_STEP_SUMMARY
-            echo "2. Deploy your infrastructure using the terraform-deploy workflow" >> $GITHUB_STEP_SUMMARY
-            echo "3. The state will be stored in the S3 bucket with DynamoDB locking" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "### ❌ Bootstrap Failed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Check the logs above for error details." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Common issues:" >> $GITHUB_STEP_SUMMARY
-            echo "- Insufficient AWS permissions" >> $GITHUB_STEP_SUMMARY
-            echo "- Resources already exist in another region" >> $GITHUB_STEP_SUMMARY
-            echo "- Network connectivity issues" >> $GITHUB_STEP_SUMMARY
-          fi
-

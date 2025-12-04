@@ -98,8 +98,8 @@ resource "aws_iam_policy" "github_actions_cicd_policy" {
           "s3:ListBucket"
         ],
         Resource = [
-          "arn:aws:s3:::${data.aws_caller_identity.current.account_id}-terraform-state",
-          "arn:aws:s3:::${data.aws_caller_identity.current.account_id}-terraform-state/*"
+          "arn:aws:s3:::terraform-state-${data.aws_caller_identity.current.account_id}",
+          "arn:aws:s3:::terraform-state-${data.aws_caller_identity.current.account_id}/*"
         ]
       },
       # Backend management (dynamodb)
@@ -110,7 +110,7 @@ resource "aws_iam_policy" "github_actions_cicd_policy" {
           "dynamodb:PutItem",
           "dynamodb:DeleteItem"
         ],
-        Resource = "arn:aws:dynamodb:${var.aws_region}:*:table/${data.aws_caller_identity.current.account_id}-terraform-lock-table"
+        Resource = "arn:aws:dynamodb:${var.aws_region}:*:table/terraform-lock-table-${data.aws_caller_identity.current.account_id}"
       },
       # OpenID Connect Provider
       {

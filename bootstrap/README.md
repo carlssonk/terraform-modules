@@ -21,8 +21,8 @@ Replace `AWS_REGION` with the AWS region
                 "s3:PutBucketPublicAccessBlock"
             ],
             "Resource": [
-                "arn:aws:s3:::AWS_ACCOUNT_ID-terraform-state",
-                "arn:aws:s3:::AWS_ACCOUNT_ID-terraform-state/*"
+                "arn:aws:s3:::terraform-state-AWS_ACCOUNT_ID",
+                "arn:aws:s3:::terraform-state-AWS_ACCOUNT_ID/*"
             ]
         },
         {
@@ -40,7 +40,7 @@ Replace `AWS_REGION` with the AWS region
                 "dynamodb:TagResource",
                 "dynamodb:UpdateContinuousBackups"
             ],
-            "Resource": "arn:aws:dynamodb:AWS_REGION:*:table/AWS_ACCOUNT_ID-terraform-lock-table"
+            "Resource": "arn:aws:dynamodb:AWS_REGION:*:table/terraform-lock-table-AWS_ACCOUNT_ID"
         },
         {
             "Sid": "IAMOpenIdConnectProviderAndGithubActionsCicdRole",
