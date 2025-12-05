@@ -35,3 +35,65 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+# Cloudflare Worker variables
+variable "enable_worker" {
+  description = "Enable Cloudflare Worker for feature-flag based routing"
+  type        = bool
+  default     = false
+}
+
+variable "cloudflare_account_id" {
+  description = "Cloudflare account ID (required if enable_worker is true)"
+  type        = string
+  default     = null
+}
+
+variable "worker_name" {
+  description = "Name of the Cloudflare Worker (defaults to domain-based name)"
+  type        = string
+  default     = null
+}
+
+variable "worker_script" {
+  description = "Custom worker script content (defaults to the bundled worker.js)"
+  type        = string
+  default     = null
+}
+
+variable "worker_compatibility_date" {
+  description = "Compatibility date for the worker runtime (YYYY-MM-DD format)"
+  type        = string
+  default     = "2024-01-01"
+}
+
+variable "worker_compatibility_flags" {
+  description = "Compatibility flags for the worker runtime"
+  type        = list(string)
+  default     = []
+}
+
+variable "worker_logpush" {
+  description = "Enable Logpush for the worker"
+  type        = bool
+  default     = false
+}
+
+variable "worker_secrets" {
+  description = "Secret bindings for the worker (e.g., CONFIGCAT_API_KEY)"
+  type        = map(string)
+  default     = {}
+  sensitive   = true
+}
+
+variable "worker_plain_text_bindings" {
+  description = "Plain text bindings for the worker (environment variables)"
+  type        = map(string)
+  default     = {}
+}
+
+variable "worker_kv_namespaces" {
+  description = "KV namespace bindings for the worker"
+  type        = map(string)
+  default     = {}
+}

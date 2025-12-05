@@ -17,4 +17,49 @@ This guide shows you how to setup and use Terraform Modules provided by this pro
 1. Create a Cloudflare account
 2. Add your domain name and make sure DNS records are empty and you have added the cloudflare nameservers to your domain register
 3. Retrieve your API token at your [Cloudflare dashboard](https://dash.cloudflare.com/profile/api-tokens) and add `CLOUDFLARE_API_TOKEN` to your environment secret.
-4. Done
+4. (Optional) If using Cloudflare Workers, retrieve your Account ID from the Cloudflare dashboard and add `CLOUDFLARE_ACCOUNT_ID` to your environment variables
+5. **Note:** Cloudflare Workers module requires Cloudflare Provider v5.0 or later. See [MIGRATION_V5.md](MIGRATION_V5.md) if upgrading from v4.0.
+6. Done
+
+## Available Modules
+
+### Infrastructure Modules
+
+#### AWS Modules
+- **[s3](modules/s3/)** - S3 bucket with website hosting and bucket policies
+- **[dynamodb](modules/dynamodb/)** - DynamoDB table configuration
+- **[cloudwatch](modules/cloudwatch/)** - CloudWatch log groups and alarms
+
+#### Cloudflare Modules
+- **[cloudflare-zone](modules/cloudflare-zone/)** - Cloudflare zone settings management
+- **[cloudflare-dns-record](modules/cloudflare-dns-record/)** - DNS record management
+- **[cloudflare-worker](modules/cloudflare-worker/)** - Cloudflare Workers deployment with routes and bindings
+
+### Compositions
+
+#### [cloudflare-cdn-website](compositions/cloudflare-cdn-website/)
+Complete CDN-backed website using S3 and Cloudflare. Supports:
+- Static website hosting on S3
+- Cloudflare DNS and CDN
+- Optional Cloudflare Worker for feature-flag based version routing
+- ConfigCat integration for dynamic version selection
+
+**Use cases:**
+- Static websites with CDN
+- Feature-flag based deployments
+- A/B testing different versions
+- Gradual rollouts with instant rollback capability
+
+See the [composition README](compositions/cloudflare-cdn-website/README.md) for detailed usage.
+
+## Cloudflare Workers
+
+The `cloudflare-worker` module enables advanced edge computing capabilities:
+
+- **Feature-flag routing**: Serve different website versions based on ConfigCat feature flags
+- **Dynamic content**: Process requests at the edge before reaching origin
+- **Custom logic**: Implement authentication, redirects, request/response modification
+- **KV storage**: Use Cloudflare's key-value storage at the edge
+- **Secrets management**: Securely store API keys and tokens
+
+Example use case: Deploy multiple versions of your website to S3 under different paths (e.g., `/v1/`, `/v2/`, `/staging/`), then use a Worker with ConfigCat to dynamically route users to the appropriate version based on feature flags, without changing DNS or redeploying infrastructure.

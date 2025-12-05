@@ -55,3 +55,37 @@ module "cloudflare_dns_record" {
     } : {}
   )
 }
+
+# Cloudflare Worker for feature-flag based routing
+module "cloudflare_worker" {
+  count = var.enable_worker ? 1 : 0
+
+  source      = "../../modules/cloudflare-worker"
+  account_id  = var.cloudflare_account_id
+  zone_name   = var.root_domain
+  worker_name = var.worker_name != null ? var.worker_name : "${replace(local.domain_name, ".", "-")}-worker"
+
+  worker_script = var.worker_script != null ? var.worker_script : file("${path.module}/worker.js")
+
+  # Worker runtime configuration (Cloudflare Provider v5.0)
+  compatibility_date  = var.worker_compatibility_date
+  compatibility_flags = var.worker_compatibility_flags
+  logpush             = var.worker_logpush
+
+  routes = {
+    main = {
+      pattern = "${local.domain_name}/*"
+    }
+  }
+
+  secrets = var.worker_secrets
+
+  plain_text_bindings = merge(
+    {
+      S3_BUCKET_NAME = module.subdomain_bucket.bucket_id
+    },
+    var.worker_plain_text_bindings
+  )
+
+  kv_namespaces = var.worker_kv_namespaces
+}

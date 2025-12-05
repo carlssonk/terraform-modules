@@ -1,0 +1,107 @@
+# Example terraform.tfvars for cloudflare-cdn-website with Worker
+
+# Basic Configuration
+root_domain = "example.com"
+subdomain   = "www"
+
+# Optional: Custom index document
+# index_document = "index.html"
+
+# Optional: Allow bucket destruction with content
+# force_destroy = false
+
+# Tags
+tags = {
+  Environment = "production"
+  Project     = "my-website"
+  ManagedBy   = "terraform"
+}
+
+# ============================================================================
+# Cloudflare Worker Configuration (Optional)
+# ============================================================================
+
+# Enable Cloudflare Worker for feature-flag based routing
+enable_worker = true
+
+# Required: Your Cloudflare Account ID
+# Find this in your Cloudflare dashboard
+cloudflare_account_id = "1234567890abcdef1234567890abcdef"
+
+# Optional: Custom worker name
+# If not specified, will be generated from domain name (e.g., "www-example-com-worker")
+# worker_name = "my-custom-worker"
+
+# Optional: Custom worker script
+# If not specified, will use the default worker.js from the composition
+# worker_script = file("${path.module}/my-custom-worker.js")
+
+# Optional: Worker compatibility settings
+# Compatibility date for the Workers runtime (YYYY-MM-DD format)
+# worker_compatibility_date = "2024-01-01"
+
+# Optional: Compatibility flags (e.g., ["nodejs_compat"])
+# worker_compatibility_flags = []
+
+# Optional: Enable Logpush for the worker
+# worker_logpush = false
+
+# Secrets: Sensitive values like API keys
+# These should be passed via environment variables or a secrets manager
+worker_secrets = {
+  # ConfigCat SDK key for feature flag evaluation
+  CONFIGCAT_API_KEY = "configcat_sdk_key_here"
+  
+  # Add other secrets as needed
+  # API_KEY = "your-api-key"
+}
+
+# Plain text bindings: Non-sensitive environment variables
+worker_plain_text_bindings = {
+  # Default hash/version to use if feature flag evaluation fails
+  DEFAULT_HASH = "v1.0.0"
+  
+  # Add other environment variables as needed
+  # ENVIRONMENT = "production"
+}
+
+# Optional: KV namespace bindings
+# Uncomment if you want to use Cloudflare KV storage in your worker
+# worker_kv_namespaces = {
+#   MY_KV = "your-kv-namespace-id"
+# }
+
+# ============================================================================
+# Notes
+# ============================================================================
+#
+# 1. Never commit this file with real secrets! Add terraform.tfvars to .gitignore
+#
+# 2. Better approach for secrets:
+#    - Use environment variables: TF_VAR_configcat_api_key
+#    - Use Terraform Cloud workspace variables
+#    - Use AWS Secrets Manager with data sources
+#
+# 3. To get your Cloudflare Account ID:
+#    - Log into Cloudflare dashboard
+#    - Click on Workers & Pages
+#    - Your Account ID is shown in the right sidebar
+#
+# 4. To get your ConfigCat SDK key:
+#    - Log into ConfigCat dashboard
+#    - Go to your Config (or create one)
+#    - Click on "Connect your application"
+#    - Copy the SDK Key
+#
+# 5. S3 bucket structure with versioning:
+#    s3://www.example.com/
+#      ├── v1.0.0/
+#      │   ├── index.html
+#      │   └── ...
+#      ├── v2.0.0/
+#      │   ├── index.html
+#      │   └── ...
+#      └── staging/
+#          ├── index.html
+#          └── ...
+

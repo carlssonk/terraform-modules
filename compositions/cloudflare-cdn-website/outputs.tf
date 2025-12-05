@@ -43,3 +43,17 @@ output "domain_name" {
   value       = local.domain_name
 }
 
+output "worker_id" {
+  description = "ID of the Cloudflare Worker (if enabled)"
+  value       = var.enable_worker ? module.cloudflare_worker[0].worker_id : null
+}
+
+output "worker_name" {
+  description = "Name of the Cloudflare Worker (if enabled)"
+  value       = var.enable_worker ? module.cloudflare_worker[0].worker_name : null
+}
+
+output "worker_routes" {
+  description = "Map of worker routes (if enabled)"
+  value       = var.enable_worker ? module.cloudflare_worker[0].routes : null
+}
