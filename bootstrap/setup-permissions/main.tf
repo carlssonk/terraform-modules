@@ -55,6 +55,7 @@ resource "aws_iam_role" "github_actions_cicd_role" {
           }
           StringLike = {
             "${local.oidc_domain}:sub" : [
+              "repo:${var.organization}/${var.repository}:ref:refs/heads/main",
               "repo:${var.organization}/${var.repository}:environment:${terraform.workspace}"
             ]
           }
