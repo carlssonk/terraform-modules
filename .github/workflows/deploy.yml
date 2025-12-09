@@ -42,10 +42,6 @@ concurrency:
   group: terraform-${{ inputs.environment }}-${{ inputs.state_key }}
   cancel-in-progress: false
 
-env:
-  TF_VAR_aws_region: ${{ inputs.aws_region }}
-  TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
 jobs:
   terraform-deploy:
     name: ${{ inputs.action == 'plan' && 'Plan' || 'Deploy' }} Infrastructure - ${{ inputs.environment }}
@@ -55,6 +51,9 @@ jobs:
     permissions:
       id-token: write
       contents: write
+    env:
+      TF_VAR_aws_region: ${{ inputs.aws_region }}
+      TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
