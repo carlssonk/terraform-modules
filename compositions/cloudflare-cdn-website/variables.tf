@@ -9,12 +9,12 @@ variable "root_domain" {
 }
 
 variable "subdomain" {
-  description = "The subdomain to create (e.g., 'www', 'blog', 'docs'). If set to 'www', will also create a root domain redirect."
+  description = "The subdomain to create (e.g., 'www', 'blog', 'docs', 'docs.staging'). If set to 'www', will also create a root domain redirect."
   type        = string
 
   validation {
-    condition     = can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", var.subdomain))
-    error_message = "Subdomain must contain only lowercase letters, numbers, and hyphens, and must start and end with a letter or number."
+    condition     = can(regex("^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$", var.subdomain))
+    error_message = "Subdomain must contain only lowercase letters, numbers, hyphens, and dots, and must start and end with a letter or number."
   }
 }
 
