@@ -29,9 +29,6 @@ on:
         description: "Terraform state file"
         required: false
         default: "terraform.tfstate"
-    secrets:
-      CLOUDFLARE_API_TOKEN:
-        required: false
 
 concurrency:
   group: terraform-destroy-${{ inputs.environment }}-${{ inputs.state_key }}
@@ -48,7 +45,6 @@ jobs:
       contents: write
     env:
       TF_VAR_aws_region: ${{ inputs.aws_region }}
-      TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
