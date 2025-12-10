@@ -14,7 +14,7 @@ variable "template_body" {
   default     = null
 
   validation {
-    condition     = var.template_body == null || (var.template_body != null && length(var.template_body) > 0)
+    condition     = var.template_body == null || try(length(var.template_body) > 0, false)
     error_message = "If template_body is specified, it must not be empty."
   }
 }
@@ -25,7 +25,7 @@ variable "template_url" {
   default     = null
 
   validation {
-    condition     = var.template_url == null || (var.template_url != null && can(regex("^https://", var.template_url)))
+    condition     = var.template_url == null || can(regex("^https://", var.template_url))
     error_message = "If template_url is specified, it must be a valid HTTPS URL."
   }
 }
@@ -78,7 +78,7 @@ variable "timeout_in_minutes" {
   default     = null
 
   validation {
-    condition     = var.timeout_in_minutes == null || (var.timeout_in_minutes >= 1 && var.timeout_in_minutes <= 43200)
+    condition     = var.timeout_in_minutes == null || try(var.timeout_in_minutes >= 1 && var.timeout_in_minutes <= 43200, false)
     error_message = "If timeout_in_minutes is specified, it must be between 1 and 43200 (30 days)."
   }
 }
@@ -109,7 +109,7 @@ variable "policy_url" {
   default     = null
 
   validation {
-    condition     = var.policy_url == null || (var.policy_url != null && can(regex("^https://", var.policy_url)))
+    condition     = var.policy_url == null || can(regex("^https://", var.policy_url))
     error_message = "If policy_url is specified, it must be a valid HTTPS URL."
   }
 }
