@@ -1,5 +1,12 @@
 locals {
   domain_name = "${var.subdomain}.${var.root_domain}"
+  tags = merge(
+    {
+      Environment = terraform.workspace
+      ManagedBy   = "terraform"
+    },
+    var.tags
+  )
 }
 
 module "subdomain_bucket" {
@@ -15,7 +22,7 @@ module "subdomain_bucket" {
   }
 
   force_destroy               = var.force_destroy
-  tags                        = var.tags
+  tags                        = local.tags
   block_public_acls           = false
   block_public_policy         = false
   ignore_public_acls          = false
@@ -32,7 +39,7 @@ module "root_bucket" {
   }
 
   force_destroy = var.force_destroy
-  tags          = var.tags
+  tags = local.tags
 
   depends_on = [module.subdomain_bucket]
 }
