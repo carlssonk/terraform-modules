@@ -14,9 +14,5 @@ resource "aws_cloudformation_stack" "this" {
   policy_url        = var.policy_url
 
   tags = var.tags
-
-  lifecycle {
-    ignore_changes = var.ignore_changes
-  }
 }
 

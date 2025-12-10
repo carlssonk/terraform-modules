@@ -120,9 +120,3 @@ variable "tags" {
   default     = {}
 }
 
-variable "ignore_changes" {
-  description = "List of attribute paths to ignore changes for"
-  type        = list(string)
-  default     = []
-}
-
