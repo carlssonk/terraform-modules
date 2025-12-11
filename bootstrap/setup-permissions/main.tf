@@ -155,6 +155,7 @@ resource "aws_iam_policy" "github_actions_cicd_policy" {
           "secretsmanager:*",
           "acm:*",
           "route53:*",
+          "cloudformation:*",
         ]
         Resource = "*"
       },
