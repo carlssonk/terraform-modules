@@ -156,6 +156,11 @@ resource "aws_iam_policy" "github_actions_cicd_policy" {
           "acm:*",
           "route53:*",
           "cloudformation:*",
+          "sqs:*",
+          "sns:*",
+          "apprunner:*",
+          "autoscaling:*",
+          "application-autoscaling:*",
         ]
         Resource = "*"
       },
