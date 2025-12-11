@@ -1,0 +1,132 @@
+name: Destroy Infrastructure
+
+inputs:
+  environment:
+    type: string
+    description: "Environment to destroy"
+    required: true
+  aws_region:
+    type: string
+    description: "AWS Region"
+    required: true
+  aws_account_id:
+    type: string
+    description: "AWS Account ID"
+    required: true
+  tf_root_directory:
+    type: string
+    description: "Terraform root directory (e.g., ./environments/production)"
+    required: true
+  terraform_version:
+    type: string
+    description: "Terraform version to use"
+    required: false
+    default: "1.9.7"
+  state_key:
+    type: string
+    description: "Terraform state file"
+    required: false
+    default: "terraform.tfstate"
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Configure AWS Credentials (OIDC)
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/github-actions-cicd-role
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: ${{ inputs.terraform_version }}
+
+    - name: Terraform Init
+      shell: bash
+      run: |
+        terraform init \
+          -input=false \
+          -backend-config="encrypt=true" \
+          -backend-config="region=${{ inputs.aws_region }}" \
+          -backend-config="bucket=terraform-state-${{ inputs.aws_account_id }}" \
+          -backend-config="dynamodb_table=terraform-lock-table-${{ inputs.aws_account_id }}" \
+          -backend-config="key=${{ inputs.state_key }}"
+      working-directory: ${{ inputs.tf_root_directory }}
+
+    - name: Terraform Validate
+      shell: bash
+      run: terraform validate
+      working-directory: ${{ inputs.tf_root_directory }}
+      continue-on-error: true
+
+    - name: Show Current State
+      shell: bash
+      run: |
+        echo "Current workspace:"
+        terraform workspace show
+        
+        echo ""
+        echo "Resources to be destroyed:"
+        terraform state list || echo "No resources in state"
+      working-directory: ${{ inputs.tf_root_directory }}
+      continue-on-error: true
+
+    - name: Terraform Destroy
+      shell: bash
+      run: |
+        terraform workspace select -or-create ${{ inputs.environment }}
+        
+        # Check if tfvars file exists
+        TFVARS_FILE="${{ inputs.environment }}.tfvars"
+        VAR_FILE_FLAG=""
+        if [ -f "$TFVARS_FILE" ]; then
+          VAR_FILE_FLAG="-var-file=$TFVARS_FILE"
+          echo "Using tfvars file: $TFVARS_FILE"
+        else
+          echo "No tfvars file found for ${{ inputs.environment }}"
+        fi
+        
+        echo "⚠️  Starting terraform destroy..."
+        terraform destroy -auto-approve $VAR_FILE_FLAG -no-color
+        echo "✅ Destroy complete"
+      working-directory: ${{ inputs.tf_root_directory }}
+
+    - name: Verify Destruction
+      shell: bash
+      run: |
+        echo "Verifying all resources were destroyed..."
+        REMAINING=$(terraform state list 2>/dev/null | wc -l)
+        
+        if [ "$REMAINING" -eq 0 ]; then
+          echo "✅ All resources successfully destroyed"
+        else
+          echo "⚠️  Warning: $REMAINING resources still in state:"
+          terraform state list
+          echo ""
+          echo "This may indicate:"
+          echo "1. Resources that couldn't be destroyed (check logs above)"
+          echo "2. Data sources or other non-destructible items"
+          echo "3. Manual cleanup may be required"
+        fi
+      working-directory: ${{ inputs.tf_root_directory }}
+      continue-on-error: true
+
+    - name: Summary
+      if: always()
+      shell: bash
+      run: |
+        echo "## 🗑️ Destroy Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment**: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **State Key**: ${{ inputs.state_key }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Terraform Directory**: ${{ inputs.tf_root_directory }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ job.status }}" = "success" ]; then
+          echo "✅ Infrastructure successfully destroyed" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Destroy operation failed - manual cleanup may be required" >> $GITHUB_STEP_SUMMARY
+        fi
+
