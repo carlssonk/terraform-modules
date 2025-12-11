@@ -62,3 +62,30 @@ module "cloudflare_dns_record" {
     } : {}
   )
 }
+
+
+resource "cloudflare_ruleset" "url_rewrite" {
+  count       = var.path_to_index_document != "" && var.path_to_index_document != "/" ? 1 : 0
+  zone_id     = var.cloudflare_zone_id
+  name        = "Prefix rewrite"
+  description = "Rewrite URLs to prefix with ${var.path_to_index_document}"
+  kind        = "zone"
+  phase       = "http_request_transform"
+
+  rules = [
+    {
+      action      = "rewrite"
+      description = "Add ${var.path_to_index_document} prefix to all requests"
+      enabled     = true
+      expression  = "true"
+      
+      action_parameters = {
+        uri = {
+          path = {
+            expression = "concat(\"${var.path_to_index_document}\", http.request.uri.path)"
+          }
+        }
+      }
+    }
+  ]
+}

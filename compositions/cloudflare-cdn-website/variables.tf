@@ -30,6 +30,22 @@ variable "force_destroy" {
   default     = false
 }
 
+variable "cloudflare_zone_id" {
+  description = "Cloudflare Zone ID"
+  type        = string
+}
+
+variable "path_to_index_document" {
+  description = "Path prefix to add to all requests (e.g., '/latest', '/v1'). Set to empty string or '/' to disable path rewriting."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.path_to_index_document == "" || can(regex("^/[a-zA-Z0-9._-]*$", var.path_to_index_document))
+    error_message = "path_to_index_document must be empty or start with '/' followed by valid path characters."
+  }
+}
+
 variable "tags" {
   description = "A map of tags to assign to all resources"
   type        = map(string)
