@@ -139,6 +139,55 @@ resource "aws_iam_policy" "github_actions_cicd_policy" {
         ]
         Resource = "*"
       },
+      # Composition - RunsOn
+      {
+        "Effect": "Allow",
+        "Action": [
+          "iam:CreateRole",
+          "iam:DeleteRole",
+          "iam:GetRole",
+          "iam:UpdateRole",
+          "iam:PutRolePolicy",
+          "iam:DeleteRolePolicy",
+          "iam:GetRolePolicy",
+          "iam:AttachRolePolicy",
+          "iam:DetachRolePolicy",
+          "iam:CreateInstanceProfile",
+          "iam:DeleteInstanceProfile",
+          "iam:GetInstanceProfile",
+          "iam:AddRoleToInstanceProfile",
+          "iam:RemoveRoleFromInstanceProfile",
+          "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies",
+          "iam:ListInstanceProfilesForRole",
+          "iam:ListInstanceProfiles",
+          "iam:TagRole",
+          "iam:UntagRole",
+          "iam:TagInstanceProfile",
+          "iam:UntagInstanceProfile"
+        ],
+        "Resource": [
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/runs-on*",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:instance-profile/runs-on*"
+        ]
+      },
+      # Composition - RunsOn
+      {
+        "Effect": "Allow",
+        "Action": [
+          "iam:PassRole"
+        ],
+        "Resource": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/runs-on*",
+        "Condition": {
+          "StringEquals": {
+            "iam:PassedToService": [
+              "ec2.amazonaws.com",
+              "lambda.amazonaws.com",
+              "events.amazonaws.com"
+            ]
+          }
+        }
+      },
       # AWS Services (wildcard for development speed)
       {
         Effect = "Allow"
@@ -155,13 +204,14 @@ resource "aws_iam_policy" "github_actions_cicd_policy" {
           "secretsmanager:*",
           "acm:*",
           "route53:*",
-          # All below permissions are needed for the "runs-on" composition
           "cloudformation:*",
           "sqs:*",
           "sns:*",
           "apprunner:*",
           "autoscaling:*",
           "application-autoscaling:*",
+          "lambda:*",
+          "events:*"
         ]
         Resource = "*"
       },
