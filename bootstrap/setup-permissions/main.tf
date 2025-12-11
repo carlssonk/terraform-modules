@@ -211,7 +211,14 @@ resource "aws_iam_policy" "github_actions_cicd_policy" {
           "autoscaling:*",
           "application-autoscaling:*",
           "lambda:*",
-          "events:*"
+          "events:*",
+          "cloudwatch:*",
+          "scheduler:*",
+          "resource-groups:*",
+          "elasticfilesystem:*",
+          "ce:*",
+          "cloudtrail:*",
+          "kms:*"
         ]
         Resource = "*"
       },
