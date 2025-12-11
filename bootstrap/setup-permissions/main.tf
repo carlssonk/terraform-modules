@@ -155,6 +155,7 @@ resource "aws_iam_policy" "github_actions_cicd_policy" {
           "secretsmanager:*",
           "acm:*",
           "route53:*",
+          # All below permissions are needed for the "runs-on" composition
           "cloudformation:*",
           "sqs:*",
           "sns:*",
