@@ -3,6 +3,9 @@ name: Bootstrap
 on:
   workflow_call:
     inputs:
+      runner:
+        type: string
+        default: ubuntu-latest
       environment:
         type: string
         description: "Environment to bootstrap"
@@ -39,7 +42,7 @@ env:
 jobs:
   bootstrap:
     name: Bootstrap - ${{ inputs.environment }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     timeout-minutes: 30
     environment: ${{ inputs.environment }}
 
