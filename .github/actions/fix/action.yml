@@ -101,6 +101,7 @@ runs:
       shell: bash
       run: |
         echo "🔓 Unlocking state with Lock ID: ${{ inputs.lock_id }}"
+        terraform workspace select -or-create ${{ inputs.environment }}
         terraform force-unlock -force "${{ inputs.lock_id }}"
         echo "✅ State unlocked successfully"
       working-directory: ${{ inputs.tf_root_directory }}
@@ -112,7 +113,22 @@ runs:
         echo "📥 Importing resource:"
         echo "  Address: ${{ inputs.import_address }}"
         echo "  ID: ${{ inputs.import_id }}"
-        terraform import "${{ inputs.import_address }}" "${{ inputs.import_id }}"
+        
+        # Select or create workspace
+        terraform workspace select -or-create ${{ inputs.environment }}
+        
+        # Check if tfvars file exists
+        TFVARS_FILE="${{ inputs.environment }}.tfvars"
+        VAR_FILE_FLAG=""
+        if [ -f "$TFVARS_FILE" ]; then
+          VAR_FILE_FLAG="-var-file=$TFVARS_FILE"
+          echo "Using tfvars file: $TFVARS_FILE"
+        else
+          echo "No tfvars file found for ${{ inputs.environment }}"
+        fi
+        
+        # Import with non-interactive flag
+        terraform import -input=false $VAR_FILE_FLAG "${{ inputs.import_address }}" "${{ inputs.import_id }}"
         echo "✅ Resource imported successfully"
       working-directory: ${{ inputs.tf_root_directory }}
 
