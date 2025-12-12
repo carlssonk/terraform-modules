@@ -30,9 +30,22 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
       dynamic "filter" {
         for_each = rule.value.prefix != null || try(length(rule.value.tags) > 0, false) ? [1] : []
         content {
-          and {
-            prefix = rule.value.prefix
-            tags   = try(length(rule.value.tags) > 0, false) ? rule.value.tags : null
+          dynamic "and" {
+            for_each = rule.value.prefix != null && try(length(rule.value.tags) > 0, false) ? [1] : []
+            content {
+              prefix = rule.value.prefix
+              tags   = rule.value.tags
+            }
+          }
+
+          prefix = rule.value.prefix != null && !try(length(rule.value.tags) > 0, false) ? rule.value.prefix : null
+
+          dynamic "tag" {
+            for_each = rule.value.prefix == null && try(length(rule.value.tags) > 0, false) ? rule.value.tags : {}
+            content {
+              key   = tag.key
+              value = tag.value
+            }
           }
         }
       }
