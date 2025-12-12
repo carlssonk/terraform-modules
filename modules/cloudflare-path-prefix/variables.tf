@@ -10,7 +10,7 @@ variable "zone_id" {
 }
 
 variable "path_prefix" {
-  description = "The path prefix to add to all requests (e.g., 'latest/', 'v1/', 'docs/'). Should include trailing slash if desired."
+  description = "The path prefix to add to all requests (e.g., '/latest', '/v1', '/docs/staging'). Must start with '/' and must NOT end with '/'."
   type        = string
 
   validation {
@@ -19,8 +19,13 @@ variable "path_prefix" {
   }
 
   validation {
-    condition     = !can(regex("^/", var.path_prefix))
-    error_message = "path_prefix should not start with '/'. Use 'latest/' instead of '/latest/'."
+    condition     = can(regex("^/", var.path_prefix))
+    error_message = "path_prefix must start with '/'. Use '/latest' instead of 'latest'."
+  }
+
+  validation {
+    condition     = !can(regex("/$", var.path_prefix))
+    error_message = "path_prefix must NOT end with '/'. Use '/latest' instead of '/latest/'."
   }
 }
 
