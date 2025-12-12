@@ -28,11 +28,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
       status = rule.value.enabled ? "Enabled" : "Disabled"
 
       dynamic "filter" {
-        for_each = rule.value.prefix != null || length(rule.value.tags) > 0 ? [1] : []
+        for_each = rule.value.prefix != null || (rule.value.tags != null && length(rule.value.tags) > 0) ? [1] : []
         content {
           and {
             prefix = rule.value.prefix
-            tags   = rule.value.tags
+            tags   = rule.value.tags != null && length(rule.value.tags) > 0 ? rule.value.tags : null
           }
         }
       }
