@@ -21,12 +21,12 @@ module "subdomain_bucket" {
     permissions = ["s3:GetObject"]
   }
 
-  force_destroy               = var.force_destroy
-  tags                        = local.tags
-  block_public_acls           = false
-  block_public_policy         = false
-  ignore_public_acls          = false
-  restrict_public_buckets     = false
+  force_destroy           = var.force_destroy
+  tags                    = local.tags
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
 }
 
 module "root_bucket" {
@@ -39,7 +39,7 @@ module "root_bucket" {
   }
 
   force_destroy = var.force_destroy
-  tags = local.tags
+  tags          = local.tags
 
   depends_on = [module.subdomain_bucket]
 }
@@ -63,9 +63,9 @@ module "cloudflare_dns_record" {
   )
 }
 
-
-resource "cloudflare_ruleset" "url_rewrite" {
-  count       = var.path_to_index_document != "" && var.path_to_index_document != "/" ? 1 : 0
+module "cloudflare_ruleset" {
+  source      = "../../modules/cloudflare-ruleset"
+  enabled     = var.path_to_index_document != "" && var.path_to_index_document != "/"
   zone_id     = var.cloudflare_zone_id
   name        = "Prefix rewrite"
   description = "Rewrite URLs to prefix with ${var.path_to_index_document}"
@@ -78,7 +78,7 @@ resource "cloudflare_ruleset" "url_rewrite" {
       description = "Add ${var.path_to_index_document} prefix to all requests"
       enabled     = true
       expression  = "true"
-      
+
       action_parameters = {
         uri = {
           path = {
