@@ -8,4 +8,3 @@ resource "cloudflare_ruleset" "this" {
   phase       = var.phase
   rules       = var.rules
 }
-
