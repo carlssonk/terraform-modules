@@ -36,7 +36,7 @@ variable "lifecycle_rules" {
     id                                 = string
     enabled                            = bool
     prefix                             = optional(string)
-    tags                               = optional(map(string), {})
+    tags                               = optional(map(string), null)
     expiration_days                    = optional(number)
     noncurrent_version_expiration_days = optional(number)
     transitions = optional(list(object({
