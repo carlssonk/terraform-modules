@@ -21,12 +21,14 @@ module "subdomain_bucket" {
     permissions = ["s3:GetObject"]
   }
 
-  force_destroy           = var.force_destroy
-  tags                    = local.tags
   block_public_acls       = false
   block_public_policy     = false
   ignore_public_acls      = false
   restrict_public_buckets = false
+
+  lifecycle_rules = var.lifecycle_rules
+  force_destroy   = var.force_destroy
+  tags            = local.tags
 }
 
 module "root_bucket" {

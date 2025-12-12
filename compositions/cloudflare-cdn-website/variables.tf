@@ -30,6 +30,35 @@ variable "force_destroy" {
   default     = false
 }
 
+variable "lifecycle_rules" {
+  description = "List of lifecycle rules for the bucket"
+  type = list(object({
+    id                                 = string
+    enabled                            = bool
+    prefix                             = optional(string)
+    tags                               = optional(map(string), {})
+    expiration_days                    = optional(number)
+    noncurrent_version_expiration_days = optional(number)
+    transitions = optional(list(object({
+      days          = number
+      storage_class = string
+    })), [])
+    noncurrent_version_transitions = optional(list(object({
+      days          = number
+      storage_class = string
+    })), [])
+  }))
+  default = []
+
+  validation {
+    condition = alltrue([
+      for rule in var.lifecycle_rules :
+      rule.enabled == true || rule.enabled == false
+    ])
+    error_message = "Each lifecycle rule must have a valid enabled boolean value."
+  }
+}
+
 variable "tags" {
   description = "A map of tags to assign to all resources"
   type        = map(string)
