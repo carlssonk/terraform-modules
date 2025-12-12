@@ -17,7 +17,7 @@ module "path_prefix_ruleset" {
       action_parameters = {
         uri = {
           path = {
-            expression = "concat(\"${var.path_prefix}\", http.request.uri.path)"
+            expression = "concat(${jsonencode(var.path_prefix)}, http.request.uri.path)"
           }
         }
       }
