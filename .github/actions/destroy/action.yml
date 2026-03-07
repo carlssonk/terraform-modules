@@ -55,20 +55,25 @@ runs:
           -backend-config="bucket=terraform-state-${{ inputs.aws_account_id }}" \
           -backend-config="dynamodb_table=terraform-lock-table-${{ inputs.aws_account_id }}" \
           -backend-config="key=${{ inputs.state_key }}"
+        terraform workspace select -or-create ${{ inputs.environment }}
       working-directory: ${{ inputs.tf_root_directory }}
 
     - name: Terraform Validate
       shell: bash
-      run: terraform validate
+      run: |
+        terraform workspace select ${{ inputs.environment }}
+        terraform validate
       working-directory: ${{ inputs.tf_root_directory }}
       continue-on-error: true
 
     - name: Show Current State
       shell: bash
       run: |
+        terraform workspace select ${{ inputs.environment }}
+
         echo "Current workspace:"
         terraform workspace show
-        
+
         echo ""
         echo "Resources to be destroyed:"
         terraform state list || echo "No resources in state"
@@ -78,8 +83,8 @@ runs:
     - name: Terraform Destroy
       shell: bash
       run: |
-        terraform workspace select -or-create ${{ inputs.environment }}
-        
+        terraform workspace select ${{ inputs.environment }}
+
         # Check if tfvars file exists
         TFVARS_FILE="${{ inputs.environment }}.tfvars"
         VAR_FILE_FLAG=""
@@ -89,7 +94,7 @@ runs:
         else
           echo "No tfvars file found for ${{ inputs.environment }}"
         fi
-        
+
         echo "⚠️  Starting terraform destroy..."
         terraform destroy -auto-approve $VAR_FILE_FLAG -no-color
         echo "✅ Destroy complete"
@@ -98,9 +103,11 @@ runs:
     - name: Verify Destruction
       shell: bash
       run: |
+        terraform workspace select ${{ inputs.environment }}
+
         echo "Verifying all resources were destroyed..."
         REMAINING=$(terraform state list 2>/dev/null | wc -l)
-        
+
         if [ "$REMAINING" -eq 0 ]; then
           echo "✅ All resources successfully destroyed"
         else

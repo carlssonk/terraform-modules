@@ -60,18 +60,21 @@ runs:
           -backend-config="bucket=terraform-state-${{ inputs.aws_account_id }}" \
           -backend-config="dynamodb_table=terraform-lock-table-${{ inputs.aws_account_id }}" \
           -backend-config="key=${{ inputs.state_key }}"
+        terraform workspace select -or-create ${{ inputs.environment }}
       working-directory: ${{ inputs.tf_root_directory }}
 
     - name: Terraform Validate
       shell: bash
-      run: terraform validate
+      run: |
+        terraform workspace select ${{ inputs.environment }}
+        terraform validate
       working-directory: ${{ inputs.tf_root_directory }}
 
     - name: Terraform ${{ inputs.action == 'plan' && 'Plan' || 'Apply' }}
       shell: bash
       run: |
-        terraform workspace select -or-create ${{ inputs.environment }}
-        
+        terraform workspace select ${{ inputs.environment }}
+
         # Check if tfvars file exists
         TFVARS_FILE="${{ inputs.environment }}.tfvars"
         VAR_FILE_FLAG=""
@@ -94,6 +97,8 @@ runs:
     - name: Terraform Output
       if: inputs.action == 'apply'
       shell: bash
-      run: terraform output -no-color
+      run: |
+        terraform workspace select ${{ inputs.environment }}
+        terraform output -no-color
       working-directory: ${{ inputs.tf_root_directory }}
       continue-on-error: true
