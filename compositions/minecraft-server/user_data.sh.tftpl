@@ -1,0 +1,117 @@
+#!/bin/bash
+set -euo pipefail
+
+# Wait for the data volume to be attached
+while [ ! -b ${data_device} ]; do
+  echo "Waiting for data volume ${data_device}..."
+  sleep 2
+done
+
+# Format the volume only if it has no filesystem (first deploy)
+if ! blkid ${data_device}; then
+  mkfs.xfs ${data_device}
+fi
+
+# Mount the persistent data volume
+mkdir -p /opt/minecraft
+mount ${data_device} /opt/minecraft
+
+# Ensure it mounts on reboot
+echo "${data_device} /opt/minecraft xfs defaults,nofail 0 2" >> /etc/fstab
+
+# Install Java 21 (required for modern Minecraft)
+dnf install -y java-21-amazon-corretto-headless
+
+# Create minecraft user
+useradd -r -m -d /opt/minecraft minecraft 2>/dev/null || true
+mkdir -p /opt/minecraft/server
+cd /opt/minecraft/server
+
+# Download Minecraft server (skip if already present from previous deploy)
+if [ ! -f server.jar ]; then
+  MINECRAFT_VERSION="${minecraft_version}"
+  MANIFEST_URL="https://launchermeta.mojang.com/mc/game/version_manifest_v2.json"
+  VERSION_URL=$(curl -s "$MANIFEST_URL" | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+for v in data['versions']:
+    if v['id'] == '$MINECRAFT_VERSION':
+        print(v['url'])
+        break
+")
+  SERVER_URL=$(curl -s "$VERSION_URL" | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+print(data['downloads']['server']['url'])
+")
+  curl -o server.jar "$SERVER_URL"
+fi
+
+# Accept EULA
+echo "eula=true" > eula.txt
+
+# Configure server.properties
+cat > server.properties <<EOF
+server-port=${server_port}
+max-players=${max_players}
+motd=${motd}
+difficulty=${difficulty}
+gamemode=${gamemode}
+white-list=${whitelist_enabled}
+enforce-whitelist=${whitelist_enabled}
+enable-rcon=${enable_rcon}
+rcon.password=${rcon_password}
+rcon.port=25575
+online-mode=true
+enable-command-block=false
+spawn-protection=16
+view-distance=10
+EOF
+
+%{ if whitelist_enabled && length(whitelist_players) > 0 ~}
+# Build whitelist.json by resolving player UUIDs from Mojang API
+python3 -c "
+import urllib.request, json
+players = ${jsonencode(whitelist_players)}
+whitelist = []
+for name in players:
+    try:
+        resp = urllib.request.urlopen(f'https://api.mojang.com/users/profiles/minecraft/{name}')
+        data = json.loads(resp.read())
+        uid = data['id']
+        # Format UUID with dashes
+        uuid = f'{uid[:8]}-{uid[8:12]}-{uid[12:16]}-{uid[16:20]}-{uid[20:]}'
+        whitelist.append({'uuid': uuid, 'name': data['name']})
+    except Exception as e:
+        print(f'Warning: Could not resolve player {name}: {e}')
+with open('whitelist.json', 'w') as f:
+    json.dump(whitelist, f, indent=2)
+"
+%{ endif ~}
+
+# Set ownership
+chown -R minecraft:minecraft /opt/minecraft
+
+# Create systemd service
+cat > /etc/systemd/system/minecraft.service <<EOF
+[Unit]
+Description=Minecraft Server
+After=network.target
+
+[Service]
+Type=simple
+User=minecraft
+WorkingDirectory=/opt/minecraft/server
+ExecStart=/usr/bin/java -Xms${memory} -Xmx${memory} -jar server.jar nogui
+ExecStop=/bin/kill -SIGINT \$MAINPID
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Start the server
+systemctl daemon-reload
+systemctl enable minecraft
+systemctl start minecraft
