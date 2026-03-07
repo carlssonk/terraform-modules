@@ -143,6 +143,15 @@ module "minecraft_server" {
   tags = local.tags
 }
 
+resource "aws_ssm_parameter" "ssh_private_key" {
+  count = var.enable_ssh ? 1 : 0
+  name  = "/${var.server_name}/ssh-private-key"
+  type  = "SecureString"
+  value = tls_private_key.ssh[0].private_key_openssh
+
+  tags = local.tags
+}
+
 resource "aws_volume_attachment" "minecraft_data" {
   device_name = "/dev/xvdf"
   volume_id   = aws_ebs_volume.minecraft_data.id
