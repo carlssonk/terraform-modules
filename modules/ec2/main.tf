@@ -21,7 +21,8 @@ resource "aws_instance" "this" {
   key_name               = var.key_name
   subnet_id              = var.subnet_id
   vpc_security_group_ids = var.security_group_ids
-  user_data              = var.user_data
+  user_data                   = var.user_data
+  user_data_replace_on_change = true
 
   dynamic "instance_market_options" {
     for_each = var.use_spot ? [1] : []
