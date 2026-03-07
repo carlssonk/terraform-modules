@@ -70,7 +70,7 @@ EOF
 
 %{ if whitelist_enabled && length(whitelist_players) > 0 ~}
 # Build whitelist.json by resolving player UUIDs from Mojang API
-python3 -c "
+python3 <<'PYEOF'
 import urllib.request, json
 players = ${jsonencode(whitelist_players)}
 whitelist = []
@@ -86,7 +86,7 @@ for name in players:
         print(f'Warning: Could not resolve player {name}: {e}')
 with open('whitelist.json', 'w') as f:
     json.dump(whitelist, f, indent=2)
-"
+PYEOF
 %{ endif ~}
 
 # Set ownership
