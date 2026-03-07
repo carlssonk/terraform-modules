@@ -110,7 +110,7 @@ resource "aws_ebs_volume" "minecraft_data" {
   })
 
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 }
 
