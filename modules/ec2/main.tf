@@ -23,6 +23,18 @@ resource "aws_instance" "this" {
   vpc_security_group_ids = var.security_group_ids
   user_data              = var.user_data
 
+  dynamic "instance_market_options" {
+    for_each = var.use_spot ? [1] : []
+    content {
+      market_type = "spot"
+      spot_options {
+        max_price                      = var.spot_max_price
+        spot_instance_type             = "persistent"
+        instance_interruption_behavior = "stop"
+      }
+    }
+  }
+
   root_block_device {
     volume_size = var.root_volume_size
     volume_type = var.root_volume_type

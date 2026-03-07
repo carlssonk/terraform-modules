@@ -218,7 +218,8 @@ resource "aws_iam_policy" "github_actions_cicd_policy" {
           "elasticfilesystem:*",
           "ce:*",
           "cloudtrail:*",
-          "kms:*"
+          "kms:*",
+          "ssm:*"
         ]
         Resource = "*"
       },

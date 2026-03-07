@@ -56,6 +56,18 @@ variable "root_volume_type" {
   default     = "gp3"
 }
 
+variable "use_spot" {
+  description = "Whether to use a spot instance"
+  type        = bool
+  default     = false
+}
+
+variable "spot_max_price" {
+  description = "Maximum hourly price for the spot instance. Null means the on-demand price."
+  type        = string
+  default     = null
+}
+
 variable "associate_eip" {
   description = "Whether to create and associate an Elastic IP"
   type        = bool

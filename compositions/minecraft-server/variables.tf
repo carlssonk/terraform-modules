@@ -73,6 +73,18 @@ variable "jvm_memory" {
   default     = "3G"
 }
 
+variable "use_spot" {
+  description = "Use a spot instance to save costs. The instance will be stopped (not terminated) if AWS reclaims capacity."
+  type        = bool
+  default     = false
+}
+
+variable "spot_max_price" {
+  description = "Maximum hourly price for the spot instance. Null means the on-demand price."
+  type        = string
+  default     = null
+}
+
 variable "allowed_cidrs" {
   description = "CIDR blocks allowed to connect to the Minecraft server. Use [\"0.0.0.0/0\"] for public access."
   type        = list(string)

@@ -124,6 +124,8 @@ module "minecraft_server" {
   security_group_ids = [module.minecraft_sg.security_group_id]
   associate_eip      = true
   root_volume_size   = var.volume_size
+  use_spot           = var.use_spot
+  spot_max_price     = var.spot_max_price
 
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
     minecraft_version = var.minecraft_version
@@ -174,8 +176,8 @@ module "minecraft_backups" {
       expiration_days = var.backup_retention_days
       transitions     = []
 
-      noncurrent_version_transitions        = []
-      noncurrent_version_expiration_days     = null
+      noncurrent_version_transitions     = []
+      noncurrent_version_expiration_days = null
     }
   ]
 
