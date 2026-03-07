@@ -79,6 +79,7 @@ Replace `AWS_REGION` with the AWS region
                 "iam:GetPolicyVersion",
                 "iam:ListPolicyVersions",
                 "iam:CreatePolicyVersion",
+                "iam:DeletePolicyVersion",
                 "iam:TagPolicy"
             ],
             "Resource": "arn:aws:iam::*:policy/github-actions-cicd-policy"
