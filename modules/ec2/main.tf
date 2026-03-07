@@ -29,8 +29,8 @@ resource "aws_instance" "this" {
       market_type = "spot"
       spot_options {
         max_price                      = var.spot_max_price
-        spot_instance_type             = "persistent"
-        instance_interruption_behavior = "stop"
+        spot_instance_type             = "one-time"
+        instance_interruption_behavior = "terminate"
       }
     }
   }
