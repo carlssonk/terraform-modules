@@ -144,7 +144,7 @@ resource "aws_s3_bucket_public_access_block" "this" {
 }
 
 locals {
-  policy_types = {
+  policy_statement = var.bucket_policy != null ? {
     public = {
       Effect    = "Allow"
       Principal = "*"
@@ -168,10 +168,7 @@ locals {
         }
       }
     }
-    default = null
-  }
-
-  policy_statement = var.bucket_policy != null ? lookup(local.policy_types, var.bucket_policy.name, null) : null
+  }[var.bucket_policy.name] : null
 
   policy_statement_combined = concat(
     local.policy_statement != null ? [local.policy_statement] : [],
