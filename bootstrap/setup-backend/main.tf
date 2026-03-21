@@ -1,6 +1,6 @@
 // Bootstraps terraform backend for a new environment
 terraform {
-  backend "s3" {}
+  backend "local" {}
   required_providers {
     aws = {
       source  = "hashicorp/aws"

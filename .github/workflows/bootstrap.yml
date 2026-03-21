@@ -115,7 +115,7 @@ jobs:
         run: |
           echo "🚀 Creating Terraform backend (S3 bucket + DynamoDB table)..."
 
-          terraform init -no-color -backend=false
+          terraform init -no-color
           terraform apply -auto-approve -no-color
           
           echo "✅ Backend setup complete"
