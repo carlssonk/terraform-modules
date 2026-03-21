@@ -114,8 +114,8 @@ jobs:
         if: steps.check_backend.outputs.backend_exists == 'false'
         run: |
           echo "🚀 Creating Terraform backend (S3 bucket + DynamoDB table)..."
-          
-          terraform init -no-color
+
+          terraform init -no-color -backend=false
           terraform workspace select -or-create ${{ inputs.environment }}
           terraform apply -auto-approve -no-color
           
