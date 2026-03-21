@@ -116,7 +116,6 @@ jobs:
           echo "🚀 Creating Terraform backend (S3 bucket + DynamoDB table)..."
 
           terraform init -no-color -backend=false
-          terraform workspace select -or-create ${{ inputs.environment }}
           terraform apply -auto-approve -no-color
           
           echo "✅ Backend setup complete"
