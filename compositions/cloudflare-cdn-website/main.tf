@@ -37,7 +37,6 @@ module "root_bucket" {
   bucket_name = var.root_domain
   website_config = {
     enabled           = true
-    index_document    = null
     redirect_to       = local.domain_name
     redirect_protocol = "https"
   }

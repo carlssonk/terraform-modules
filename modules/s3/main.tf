@@ -112,14 +112,14 @@ resource "aws_s3_bucket_website_configuration" "this" {
   bucket = aws_s3_bucket.this.id
 
   dynamic "index_document" {
-    for_each = var.website_config.index_document != null ? [1] : []
+    for_each = var.website_config.index_document != null && var.website_config.redirect_to == null ? [1] : []
     content {
       suffix = var.website_config.index_document
     }
   }
 
   dynamic "error_document" {
-    for_each = var.website_config.error_document != null ? [1] : []
+    for_each = var.website_config.error_document != null && var.website_config.redirect_to == null ? [1] : []
     content {
       key = var.website_config.error_document
     }
