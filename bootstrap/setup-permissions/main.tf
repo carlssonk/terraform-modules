@@ -31,6 +31,12 @@ resource "aws_iam_openid_connect_provider" "github_actions" {
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 
+  # AWS adds GitHub's thumbprints itself (and no longer checks them for this
+  # provider); the bootstrap user may not update them.
+  lifecycle {
+    ignore_changes = [thumbprint_list]
+  }
+
   tags = {
     Name        = "github-actions-oidc-provider"
     Environment = terraform.workspace
