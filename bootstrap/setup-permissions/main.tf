@@ -17,6 +17,13 @@ data "aws_caller_identity" "current" {}
 locals {
   oidc_domain           = "token.actions.githubusercontent.com"
   github_actions_cicd_policy = "github-actions-cicd-policy"
+
+  # Repos with GitHub's immutable OIDC subject (enabled after a rename) send
+  # "repo:<owner>@<owner_id>/<repo>@<repo_id>:..." instead of "repo:<owner>/<repo>:...".
+  repo_subjects = compact([
+    "repo:${var.organization}/${var.repository}",
+    var.organization_id != "" && var.repository_id != "" ? "repo:${var.organization}@${var.organization_id}/${var.repository}@${var.repository_id}" : "",
+  ])
 }
 
 resource "aws_iam_openid_connect_provider" "github_actions" {
@@ -51,10 +58,12 @@ resource "aws_iam_role" "github_actions_cicd_role" {
             "${local.oidc_domain}:aud" : "sts.amazonaws.com"
           }
           StringLike = {
-            "${local.oidc_domain}:sub" : [
-              "repo:${var.organization}/${var.repository}:ref:refs/heads/main",
-              "repo:${var.organization}/${var.repository}:environment:${terraform.workspace}"
-            ]
+            "${local.oidc_domain}:sub" : flatten([
+              for repo in local.repo_subjects : [
+                "${repo}:ref:refs/heads/main",
+                "${repo}:environment:${terraform.workspace}"
+              ]
+            ])
           }
         }
       }
